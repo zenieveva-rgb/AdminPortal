@@ -58,9 +58,19 @@ loginForm.addEventListener("submit", async (e) => {
             password.value
         );
 
-        console.log("LOGIN SUCCESS:", userCred.user);
+        const uid = userCred.user.uid;
 
-        // ✅ FORCE UI CHANGE IMMEDIATELY
+        // 🔐 Check if admin
+        const snap = await get(ref(db, `users/${uid}`));
+
+        if (!snap.exists() || snap.val().role !== "admin") {
+            alert("Access denied: Not an admin");
+
+            await signOut(auth);
+            return; // ✅ NOW VALID (inside function)
+        }
+
+        // ✅ SHOW DASHBOARD
         loginContainer.classList.add("hidden");
         dashboard.classList.remove("hidden");
 
@@ -71,7 +81,6 @@ loginForm.addEventListener("submit", async (e) => {
         alert(err.message);
     }
 });
-
 /* 🔹 AUTH STATE */
 onAuthStateChanged(auth, (user) => {
     if (!user) {
@@ -84,10 +93,7 @@ const uid = userCred.user.uid;
 const adminRef = ref(db, `users/${uid}`);
 const snap = await get(adminRef);
 
-if (!snapshot.exists()) {
-    table.innerHTML = "<tr><td colspan='3'>No pending requests</td></tr>";
-    return;
-}
+
 /* 🔹 LOAD REQUESTS */
 function loadRequests() {
     const table = document.getElementById("usersTableBody");
