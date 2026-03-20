@@ -29,15 +29,14 @@ import {
 // CONFIGURATION - REPLACE WITH YOUR FIREBASE CONFIG
 // ============================================
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "YOUR_API_KEY",  // You need to get this from Firebase Console
+    authDomain: "database-98a70.firebaseapp.com",
+    databaseURL: "https://database-98a70-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "database-98a70",
+    storageBucket: "database-98a70.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",  // Get from Firebase Console
+    appId: "YOUR_APP_ID"  // Get from Firebase Console
 };
-
 // ============================================
 // INITIALIZE FIREBASE
 // ============================================
