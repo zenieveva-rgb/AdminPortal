@@ -47,17 +47,27 @@ const password = document.getElementById("password");
 
 /* 🔹 LOGIN */
 loginForm.addEventListener("submit", async (e) => {
-    e.preventDefault(); // stops refresh
+    e.preventDefault();
 
     try {
         console.log("Logging in...");
 
-        await signInWithEmailAndPassword(
+        const userCred = await signInWithEmailAndPassword(
             auth,
             email.value,
             password.value
         );
+
+        console.log("LOGIN SUCCESS:", userCred.user);
+
+        // ✅ FORCE UI CHANGE IMMEDIATELY
+        loginContainer.classList.add("hidden");
+        dashboard.classList.remove("hidden");
+
+        loadRequests();
+
     } catch (err) {
+        console.error("LOGIN ERROR:", err);
         alert(err.message);
     }
 });
@@ -80,6 +90,17 @@ onAuthStateChanged(auth, (user) => {
         dashboard.classList.add("hidden");
     }
 });
+const uid = userCred.user.uid;
+
+const adminRef = ref(db, `users/${uid}`);
+const snap = await get(adminRef);
+
+if (!snap.exists() || snap.val().role !== "admin") {
+    alert("Access denied: Not an admin");
+
+    await signOut(auth);
+    return;
+}
 /* 🔹 LOAD REQUESTS */
 function loadRequests() {
     const table = document.getElementById("usersTableBody");
