@@ -14,6 +14,15 @@ function createParticles() {
         particlesContainer.appendChild(particle);
     }
 }
+function showLogin() {
+    document.getElementById('loginContainer').style.display = 'flex';
+    document.getElementById('dashboard').style.display = 'none';
+}
+
+function showDashboard() {
+    document.getElementById('loginContainer').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+}
 // Firebase config (update your actual config here)
 const firebaseConfig = {
     apiKey: "AIzaSyAdmnUvsdq-2wR1l11l5Yp0Qtn_m1E7RPM",
