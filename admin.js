@@ -142,3 +142,6 @@ window.approveUser = async function(requestId, userEmail) {
 logoutBtn.addEventListener("click", () => {
     signOut(auth);
 });
+console.log("Logging in:", email.value);
+console.log("Snapshot exists?", snap.exists());
+console.log("Role:", snap.val() && snap.val().role);
