@@ -1,119 +1,227 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
-import { 
-    getDatabase, ref, onValue, set, remove 
-} from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
+/* =========================
+   ROOT VARIABLES
+========================= */
+:root {
+    --primary: #3b82f6;
+    --primary-dark: #2563eb;
+    --bg: #0f172a;
+    --card: #1e293b;
+    --text: #f8fafc;
+    --muted: #94a3b8;
+    --border: #334155;
 
-import { 
-    getAuth, 
-    signInWithEmailAndPassword,
-    onAuthStateChanged,
-    signOut,
-    createUserWithEmailAndPassword
-} from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
 
-// 🔥 Firebase Config
-const firebaseConfig = {
-  apiKey: "AIzaSyBdlEvDlQ1qWr8xdL4bV25NW4RgcTajYqM",
-  authDomain: "database-98a70.firebaseapp.com",
-  databaseURL: "https://database-98a70-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "database-98a70",
-  storageBucket: "database-98a70.firebasestorage.app",
-  messagingSenderId: "460345885965",
-  appId: "1:460345885965:web:890fb3653f670101af9c44"
-};
-
-// 🔹 Initialize
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const auth = getAuth(app);
-
-// 🔹 DOM
-const loginContainer = document.getElementById("loginContainer");
-const dashboard = document.getElementById("dashboard");
-const loginForm = document.getElementById("adminLoginForm");
-const logoutBtn = document.getElementById("logoutBtn");
-
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
-
-const tableBody = document.getElementById("usersTableBody");
-
-// 🔹 LOGIN
-loginForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-
-    signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value)
-        .then(() => alert("Login success"))
-        .catch(err => alert(err.message));
-});
-
-// 🔹 AUTH STATE
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        loginContainer.style.display = "none";
-        dashboard.style.display = "block";
-        loadRequests();
-    } else {
-        loginContainer.style.display = "block";
-        dashboard.style.display = "none";
-    }
-});
-
-// 🔹 LOAD PENDING USERS
-function loadRequests() {
-    const refData = ref(db, "pendingApprovals");
-
-    onValue(refData, (snapshot) => {
-        tableBody.innerHTML = "";
-
-        const data = snapshot.val();
-
-        if (!data) {
-            tableBody.innerHTML = "<tr><td>No requests found</td></tr>";
-            return;
-        }
-
-        Object.entries(data).forEach(([id, req]) => {
-            tableBody.innerHTML += `
-                <tr>
-                    <td>${req.email}</td>
-                    <td>${req.status}</td>
-                    <td>
-                        <button onclick="approveUser('${id}', '${req.email}')">
-                            Approve
-                        </button>
-                    </td>
-                </tr>
-            `;
-        });
-    });
+    --radius: 10px;
+    --transition: 0.3s ease;
 }
 
-// 🔹 APPROVE USER
-window.approveUser = async function(id, email) {
-    try {
-        const tempPassword = "Temp12345";
+/* =========================
+   GLOBAL
+========================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', sans-serif;
+}
 
-        const userCredential = await createUserWithEmailAndPassword(auth, email, tempPassword);
-        const uid = userCredential.user.uid;
+body {
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+}
 
-        await set(ref(db, "users/" + uid), {
-            email,
-            role: "secretary",
-            status: "approved"
-        });
+/* =========================
+   LOGIN PAGE
+========================= */
+.login-container {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #020617, #1e293b);
+    animation: fadeIn 0.6s ease;
+}
 
-        await remove(ref(db, "pendingApprovals/" + id));
+.login-box {
+    background: var(--card);
+    padding: 40px;
+    border-radius: var(--radius);
+    width: 320px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    animation: slideUp 0.6s ease;
+}
 
-        alert("User approved!");
-    } catch (error) {
-        alert(error.message);
+.login-box h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.login-box input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: #0f172a;
+    color: white;
+    outline: none;
+    transition: var(--transition);
+}
+
+.login-box input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 5px var(--primary);
+}
+
+.login-box button {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border: none;
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    transition: var(--transition);
+}
+
+.login-box button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(59,130,246,0.4);
+}
+
+/* =========================
+   DASHBOARD
+========================= */
+#dashboard {
+    padding: 20px;
+    animation: fadeIn 0.5s ease;
+}
+
+.hidden {
+    display: none;
+}
+
+/* =========================
+   HEADER
+========================= */
+h2 {
+    margin-bottom: 20px;
+}
+
+/* =========================
+   BUTTON
+========================= */
+button {
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+#logoutBtn {
+    background: var(--danger);
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    color: white;
+    margin-bottom: 20px;
+}
+
+#logoutBtn:hover {
+    background: #dc2626;
+    transform: scale(1.05);
+}
+
+/* =========================
+   TABLE
+========================= */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    animation: fadeIn 0.6s ease;
+}
+
+th, td {
+    padding: 14px;
+    text-align: left;
+}
+
+th {
+    background: #0f172a;
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+tr {
+    border-bottom: 1px solid var(--border);
+    transition: var(--transition);
+}
+
+tr:hover {
+    background: #334155;
+}
+
+/* =========================
+   ACTION BUTTONS
+========================= */
+button {
+    border-radius: 6px;
+    padding: 6px 10px;
+    border: none;
+    font-size: 13px;
+}
+
+button:hover {
+    transform: scale(1.05);
+}
+
+/* Approve Button */
+button.approve {
+    background: var(--success);
+    color: white;
+}
+
+/* =========================
+   ANIMATIONS
+========================= */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
     }
-};
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
-// 🔹 LOGOUT
-logoutBtn.addEventListener("click", () => {
-    signOut(auth);
-});
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 768px) {
+    .login-box {
+        width: 90%;
+        padding: 25px;
+    }
 
-console.log("Admin JS fixed and running");
+    table {
+        font-size: 13px;
+    }
+
+    th, td {
+        padding: 10px;
+    }
+}
