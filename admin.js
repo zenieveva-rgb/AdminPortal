@@ -1,16 +1,27 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-analytics.js";
+import {
+    getDatabase, ref, onValue, set, remove
+} from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
+
+import {
+    getAuth,
+    signInWithEmailAndPassword,
+    onAuthStateChanged,
+    signOut,
+    createUserWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
+
 console.log("JS loaded");
+
 /* 🔹 Firebase Config */
 const firebaseConfig = {
-  apiKey: "AIzaSyBdlEvDlQ1qWr8xdL4bV25NW4RgcTajYqM",
-  authDomain: "database-98a70.firebaseapp.com",
-  databaseURL: "https://database-98a70-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "database-98a70",
-  storageBucket: "database-98a70.appspot.com",
-  messagingSenderId: "460345885965",
-  appId: "1:460345885965:web:890fb3653f670101af9c44",
-  measurementId: "G-LK7BNN5FRF"
+    apiKey: "AIzaSyBdlEvDlQ1qWr8xdL4bV25NW4RgcTajYqM",
+    authDomain: "database-98a70.firebaseapp.com",
+    databaseURL: "https://database-98a70-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "database-98a70",
+    storageBucket: "database-98a70.appspot.com", // FIXED
+    messagingSenderId: "460345885965",
+    appId: "1:460345885965:web:890fb3653f670101af9c44"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -26,14 +37,9 @@ const logoutBtn = document.getElementById("logoutBtn");
 const email = document.getElementById("email");
 const password = document.getElementById("password");
 
-const loginForm = document.getElementById("adminLoginForm");
-
-loginForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    alert("Login button works");
-});
+/* 🔹 LOGIN */
 loginForm.addEventListener("submit", async (e) => {
-    e.preventDefault(); // 🔥 stops page refresh
+    e.preventDefault(); // stops refresh
 
     try {
         console.log("Logging in...");
@@ -50,6 +56,7 @@ loginForm.addEventListener("submit", async (e) => {
         alert(err.message);
     }
 });
+
 /* 🔹 AUTH STATE */
 onAuthStateChanged(auth, (user) => {
     if (user) {
@@ -102,7 +109,7 @@ window.approveUser = async function(id, email) {
 
         } catch (error) {
             if (error.code === "auth/email-already-in-use") {
-                alert("User already exists. Proceeding...");
+                alert("User already exists.");
             } else {
                 throw error;
             }
