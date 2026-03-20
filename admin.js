@@ -104,19 +104,27 @@ window.approveUser = async function(requestId, userEmail) {
 
         const tempPassword = "Temp12345";
 
-        // ✅ Create Auth user FIRST
-      const userCredential = await createUserWithEmailAndPassword(auth, userEmail, tempPassword);
-const uid = userCredential.user.uid;
+        // Create Auth user
+        const userCredential = await createUserWithEmailAndPassword(auth, userEmail, tempPassword);
+        const uid = userCredential.user.uid;
 
-const requestRef = ref(db, `pendingApprovals/${requestId}`);
-const snapshot = await get(requestRef);
-
+        // Save to users
         await set(ref(db, `users/${uid}`), {
-    email: userEmail,
-    role: "user",
-    createdAt: Date.now()
-});
+            email: userEmail,
+            role: "user",
+            createdAt: Date.now()
+        });
 
+        // Remove from pending
+        await remove(ref(db, `pendingApprovals/${requestId}`));
+
+        alert("User approved!");
+
+    } catch (err) {
+        console.error("Approval error:", err);
+        alert(err.message);
+    }
+};
 /* 🔹 LOGOUT */
 logoutBtn.addEventListener("click", () => {
     signOut(auth);
