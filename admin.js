@@ -11,12 +11,37 @@ import {
     createUserWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
 
-// 🔥 Firebase config
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
+
+const db = getDatabase();
+
+const tableBody = document.getElementById("usersTableBody");
+
+onValue(ref(db, "pendingApprovals"), (snapshot) => {
+    tableBody.innerHTML = "";
+
+    snapshot.forEach((child) => {
+        const user = child.val();
+
+        const row = `
+            <tr>
+                <td>${user.firstName}</td>
+                <td>${user.email}</td>
+                <td>${user.status}</td>
+            </tr>
+        `;
+
+        tableBody.innerHTML += row;
+    });
+});
 const firebaseConfig = {
-    apiKey: "YOUR_KEY",
-    authDomain: "YOUR_DOMAIN",
-    databaseURL: "YOUR_DB_URL",
-    projectId: "YOUR_ID"
+    apiKey: "YOUR_KEY", // ❌ replace this
+    authDomain: "database-98a70.firebaseapp.com",
+    databaseURL: "https://database-98a70-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "database-98a70",
+    storageBucket: "database-98a70.appspot.com",
+    messagingSenderId: "460345885965",
+    appId: "1:460345885965:web:8484da766b9790eaf9c44"
 };
 
 const app = initializeApp(firebaseConfig);
