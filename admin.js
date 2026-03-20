@@ -4,6 +4,11 @@ import {
     ref, 
     onValue 
 } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
+import { 
+  getAuth, 
+  signInWithEmailAndPassword 
+} from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
+
 function loadRequests() {
     const db = getDatabase();
    const requestsRef = ref(db, "pendingApprovals");
@@ -44,14 +49,27 @@ const firebaseConfig = {
     appId: "1:460345885965:web:8484da766b979a0eaf9c44"
 };
 
-// ============================================
-// ADMIN LOGIN (TEMP ONLY)
-// ============================================
-const ADMIN_CREDENTIALS = {
-    email: "developer@admin.com",
-    password: "developer1245"
-};
+function handleLogin(e) {
+    e.preventDefault();
 
+    const email = elements.emailInput.value;
+    const password = elements.passwordInput.value;
+
+    signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+            console.log("Logged in:", userCredential.user);
+
+            showDashboard();
+
+            loadRequests(); // 🔥 VERY IMPORTANT
+
+            showToast("Login successful");
+        })
+        .catch((error) => {
+            console.error(error);
+            showToast("Login failed: " + error.message);
+        });
+}
 // ============================================
 // INIT FIREBASE
 // ============================================
