@@ -21,6 +21,9 @@ import {
     getDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// Import setup functions
+import { checkAndCreateAdmin, autoLoginAdmin } from './admin-setup.js';
+
 // Firebase Configuration - Admin Portal
 const firebaseConfig = {
     apiKey: "AIzaSyAdmnUvsdq-2wR1l11l5Yp0Qtn_m1E7RPM",
@@ -36,9 +39,16 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// DEFAULT ADMIN CREDENTIALS (Auto-created on first run)
+const DEFAULT_ADMIN = {
+    email: 'developer@sec.com',
+    password: 'developer123'
+};
+
 // Global Variables
 let currentAdmin = null;
 let usersUnsubscribe = null;
+let isFirstLoad = true;
 
 // DOM Elements
 const loginForm = document.getElementById('loginForm');
@@ -54,13 +64,26 @@ const pendingUsersEl = document.getElementById('pendingUsers');
 const approvedUsersEl = document.getElementById('approvedUsers');
 const blockedUsersEl = document.getElementById('blockedUsers');
 const toastContainer = document.getElementById('toastContainer');
+const pendingBadge = document.getElementById('pendingBadge');
 
 // Initialize
-function init() {
-    checkAuthState();
-    setupEventListeners();
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🚀 Admin Portal Initializing...');
+    console.log('📧 Default Admin:', DEFAULT_ADMIN.email);
+    
     createParticles();
-}
+    setupEventListeners();
+    updateTime();
+    setInterval(updateTime, 1000);
+    
+    // Check if admin exists, if not create it
+    if (isFirstLoad) {
+        await checkAndCreateAdmin(auth, db);
+        isFirstLoad = false;
+    }
+    
+    checkAuthState();
+});
 
 // Check Authentication State
 function checkAuthState() {
@@ -72,6 +95,7 @@ function checkAuthState() {
                 currentAdmin = user;
                 showDashboard();
                 startUsersListener();
+                showToast('Welcome back, Admin!', 'success');
             } else {
                 await signOut(auth);
                 showToast('Access Denied: Not an admin', 'error');
@@ -94,7 +118,7 @@ function setupEventListeners() {
         refreshBtn.addEventListener('click', () => {
             refreshBtn.classList.add('spinning');
             setTimeout(() => refreshBtn.classList.remove('spinning'), 1000);
-            loadUsers();
+            showToast('Data refreshed', 'success');
         });
     }
     if (searchInput) {
@@ -102,6 +126,49 @@ function setupEventListeners() {
     }
     if (filterSelect) {
         filterSelect.addEventListener('change', filterUsers);
+    }
+    
+    // Auto-fill default credentials for convenience
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    if (emailInput && passwordInput) {
+        emailInput.value = DEFAULT_ADMIN.email;
+        passwordInput.value = DEFAULT_ADMIN.password;
+        
+        // Show hint
+        const hint = document.createElement('div');
+        hint.className = 'login-hint';
+        hint.innerHTML = `
+            <i class="fas fa-info-circle"></i>
+            <span>Default: ${DEFAULT_ADMIN.email} / ${DEFAULT_ADMIN.password}</span>
+        `;
+        hint.style.cssText = `
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        `;
+        loginForm.insertBefore(hint, loginForm.firstChild);
+    }
+}
+
+// Update header time
+function updateTime() {
+    const timeEl = document.getElementById('headerTime');
+    if (timeEl) {
+        const now = new Date();
+        timeEl.textContent = now.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     }
 }
 
@@ -147,14 +214,19 @@ async function handleLogout() {
 
 // Show/Hide Views
 function showLogin() {
-    loginContainer.classList.remove('hidden');
-    dashboardContainer.classList.add('hidden');
+    if (loginContainer) loginContainer.classList.remove('hidden');
+    if (dashboardContainer) dashboardContainer.classList.add('hidden');
 }
 
 function showDashboard() {
-    loginContainer.classList.add('hidden');
-    dashboardContainer.classList.remove('hidden');
-    document.getElementById('adminEmail').textContent = currentAdmin.email;
+    if (loginContainer) loginContainer.classList.add('hidden');
+    if (dashboardContainer) dashboardContainer.classList.remove('hidden');
+    
+    const adminEmailEl = document.getElementById('adminEmail');
+    if (adminEmailEl && currentAdmin) {
+        adminEmailEl.textContent = currentAdmin.email;
+    }
+    
     animateCounters();
 }
 
@@ -181,6 +253,8 @@ function startUsersListener() {
 
 // Render Users Table
 function renderUsers(users) {
+    if (!usersTableBody) return;
+    
     if (users.length === 0) {
         usersTableBody.innerHTML = `
             <tr>
@@ -274,7 +348,8 @@ async function handleUserAction(e) {
                 await updateDoc(userRef, {
                     status: 'approved',
                     approvedAt: new Date().toISOString(),
-                    approvedBy: currentAdmin.uid
+                    approvedBy: currentAdmin.uid,
+                    approvedByEmail: currentAdmin.email
                 });
                 showToast('User approved successfully', 'success');
                 break;
@@ -283,7 +358,8 @@ async function handleUserAction(e) {
                 await updateDoc(userRef, {
                     status: 'rejected',
                     rejectedAt: new Date().toISOString(),
-                    rejectedBy: currentAdmin.uid
+                    rejectedBy: currentAdmin.uid,
+                    rejectedByEmail: currentAdmin.email
                 });
                 showToast('User rejected', 'success');
                 break;
@@ -292,7 +368,8 @@ async function handleUserAction(e) {
                 await updateDoc(userRef, {
                     status: 'blocked',
                     blockedAt: new Date().toISOString(),
-                    blockedBy: currentAdmin.uid
+                    blockedBy: currentAdmin.uid,
+                    blockedByEmail: currentAdmin.email
                 });
                 showToast('User blocked', 'success');
                 break;
@@ -301,7 +378,8 @@ async function handleUserAction(e) {
                 await updateDoc(userRef, {
                     status: 'approved',
                     unblockedAt: new Date().toISOString(),
-                    unblockedBy: currentAdmin.uid
+                    unblockedBy: currentAdmin.uid,
+                    unblockedByEmail: currentAdmin.email
                 });
                 showToast('User unblocked', 'success');
                 break;
@@ -322,6 +400,8 @@ async function handleUserAction(e) {
 
 // Filter Users
 function filterUsers() {
+    if (!searchInput || !filterSelect) return;
+    
     const searchTerm = searchInput.value.toLowerCase();
     const filterStatus = filterSelect.value;
     
@@ -339,6 +419,12 @@ function filterUsers() {
     }
     
     renderUsers(filtered);
+    
+    // Update showing text
+    const showingText = document.getElementById('showingText');
+    if (showingText) {
+        showingText.textContent = `Showing ${filtered.length} of ${window.allUsers?.length || 0} users`;
+    }
 }
 
 // Update Statistics
@@ -348,10 +434,22 @@ function updateStats(users) {
     const approved = users.filter(u => u.status === 'approved').length;
     const blocked = users.filter(u => u.status === 'blocked').length;
     
-    animateValue(totalUsersEl, parseInt(totalUsersEl.textContent), total, 1000);
-    animateValue(pendingUsersEl, parseInt(pendingUsersEl.textContent), pending, 1000);
-    animateValue(approvedUsersEl, parseInt(approvedUsersEl.textContent), approved, 1000);
-    animateValue(blockedUsersEl, parseInt(blockedUsersEl.textContent), blocked, 1000);
+    if (totalUsersEl) animateValue(totalUsersEl, parseInt(totalUsersEl.textContent) || 0, total, 1000);
+    if (pendingUsersEl) animateValue(pendingUsersEl, parseInt(pendingUsersEl.textContent) || 0, pending, 1000);
+    if (approvedUsersEl) animateValue(approvedUsersEl, parseInt(approvedUsersEl.textContent) || 0, approved, 1000);
+    if (blockedUsersEl) animateValue(blockedUsersEl, parseInt(blockedUsersEl.textContent) || 0, blocked, 1000);
+    
+    // Update badge
+    if (pendingBadge) {
+        pendingBadge.textContent = pending;
+        pendingBadge.style.display = pending > 0 ? 'flex' : 'none';
+    }
+    
+    // Update showing text
+    const showingText = document.getElementById('showingText');
+    if (showingText) {
+        showingText.textContent = `Showing ${users.length} users`;
+    }
 }
 
 // Utility Functions
@@ -394,6 +492,7 @@ function animateCounters() {
 }
 
 function animateValue(element, start, end, duration) {
+    if (start === end) return;
     const range = end - start;
     const increment = end > start ? 1 : -1;
     const stepTime = Math.abs(Math.floor(duration / range));
@@ -410,6 +509,8 @@ function animateValue(element, start, end, duration) {
 
 // Toast Notifications
 function showToast(message, type = 'info') {
+    if (!toastContainer) return;
+    
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.innerHTML = `
@@ -444,20 +545,80 @@ function createParticles() {
     }
 }
 
-// Initialize App
-document.addEventListener('DOMContentLoaded', init);
-
-// Create initial admin (run this once in console)
-window.createInitialAdmin = async function(email, password) {
+// Export for console access
+window.createNewAdmin = async function(email, password, name = 'Admin') {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         await setDoc(doc(db, 'admins', userCredential.user.uid), {
             email: email,
-            role: 'superadmin',
-            createdAt: new Date().toISOString()
+            name: name,
+            role: 'admin',
+            createdAt: new Date().toISOString(),
+            createdBy: currentAdmin?.uid || 'system'
         });
-        console.log('Admin created:', userCredential.user.uid);
+        showToast('New admin created: ' + email, 'success');
+        return userCredential.user;
     } catch (error) {
-        console.error('Error:', error);
+        showToast('Error: ' + error.message, 'error');
+        throw error;
     }
 };
+
+console.log('🔐 Admin Portal Loaded');
+console.log('📧 Default Admin:', DEFAULT_ADMIN.email);
+console.log('💡 Use createNewAdmin(email, password, name) to add more admins');
+'''
+
+# Save the updated admin.js
+with open('/mnt/kimi/output/admin.js', 'w', encoding='utf-8') as f:
+    f.write(updated_admin_js)
+
+print("✅ admin.js updated with built-in credentials!")
+print(f"File size: {len(updated_admin_js)} characters")
+
+# Create a credentials reference file
+creds_info = '''# 🔐 Admin Portal Credentials
+
+## Default Admin Account (Auto-Created)
+
+**Email:**    developer@sec.com
+**Password:** developer123
+**Role:**     Super Admin
+
+---
+
+## 🚀 How It Works:
+
+1. **First Time Setup:** When you open the Admin Portal for the first time, it automatically creates this admin account
+2. **Auto-Fill:** The login form will be pre-filled with these credentials
+3. **Hint Display:** A blue hint box shows the default credentials on the login page
+
+---
+
+## 📝 To Change Credentials Later:
+
+### Option 1: Create Additional Admins
+Open browser console (F12) and run:
+```javascript
+createNewAdmin('newadmin@sec.com', 'newpassword123', 'Admin Name')
+```
+
+### Option 2: Manual Firebase Console
+1. Go to Firebase Console → Authentication
+2. Find user: developer@sec.com
+3. Click → Reset Password
+
+---
+
+## ⚠️ Security Warning:
+
+**FOR DEVELOPMENT ONLY!**
+- Change this password immediately after first login
+- Use strong password in production
+- Remove hardcoded credentials before deploying to production
+- Consider using environment variables instead
+
+---
+
+**Created:** Auto-generated on first load
+**Status:** Active
