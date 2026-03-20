@@ -11,29 +11,7 @@ import {
     createUserWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
 
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
-
-const db = getDatabase();
-
-const tableBody = document.getElementById("usersTableBody");
-
-onValue(ref(db, "pendingApprovals"), (snapshot) => {
-    tableBody.innerHTML = "";
-
-    snapshot.forEach((child) => {
-        const user = child.val();
-
-        const row = `
-            <tr>
-                <td>${user.firstName}</td>
-                <td>${user.email}</td>
-                <td>${user.status}</td>
-            </tr>
-        `;
-
-        tableBody.innerHTML += row;
-    });
-});
+// 🔥 Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyBdlEvDlQ1qWr8xdL4bV25NW4RgcTajYqM",
   authDomain: "database-98a70.firebaseapp.com",
@@ -41,10 +19,10 @@ const firebaseConfig = {
   projectId: "database-98a70",
   storageBucket: "database-98a70.firebasestorage.app",
   messagingSenderId: "460345885965",
-  appId: "1:460345885965:web:890fb3653f670101af9c44",
-  measurementId: "G-LK7BNN5FRF"
+  appId: "1:460345885965:web:890fb3653f670101af9c44"
 };
 
+// 🔹 Initialize
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
@@ -55,11 +33,16 @@ const dashboard = document.getElementById("dashboard");
 const loginForm = document.getElementById("adminLoginForm");
 const logoutBtn = document.getElementById("logoutBtn");
 
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+
+const tableBody = document.getElementById("usersTableBody");
+
 // 🔹 LOGIN
 loginForm.addEventListener("submit", (e) => {
     e.preventDefault();
 
-    signInWithEmailAndPassword(auth, email.value, password.value)
+    signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value)
         .then(() => alert("Login success"))
         .catch(err => alert(err.message));
 });
@@ -76,23 +59,22 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// 🔹 LOAD REQUESTS
+// 🔹 LOAD PENDING USERS
 function loadRequests() {
-    const table = document.getElementById("usersTableBody");
     const refData = ref(db, "pendingApprovals");
 
     onValue(refData, (snapshot) => {
+        tableBody.innerHTML = "";
+
         const data = snapshot.val();
 
-        table.innerHTML = "";
-
         if (!data) {
-            table.innerHTML = "<tr><td>No requests</td></tr>";
+            tableBody.innerHTML = "<tr><td>No requests found</td></tr>";
             return;
         }
 
         Object.entries(data).forEach(([id, req]) => {
-            table.innerHTML += `
+            tableBody.innerHTML += `
                 <tr>
                     <td>${req.email}</td>
                     <td>${req.status}</td>
@@ -107,12 +89,12 @@ function loadRequests() {
     });
 }
 
-// 🔹 APPROVE USER (IMPORTANT)
+// 🔹 APPROVE USER
 window.approveUser = async function(id, email) {
     try {
-        const password = "Temp12345";
+        const tempPassword = "Temp12345";
 
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, tempPassword);
         const uid = userCredential.user.uid;
 
         await set(ref(db, "users/" + uid), {
@@ -133,4 +115,5 @@ window.approveUser = async function(id, email) {
 logoutBtn.addEventListener("click", () => {
     signOut(auth);
 });
-console.log("Admin JS loaded");
+
+console.log("Admin JS fixed and running");
