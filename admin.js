@@ -57,9 +57,6 @@ loginForm.addEventListener("submit", async (e) => {
             email.value,
             password.value
         );
-
-        alert("Login successful");
-
     } catch (err) {
         alert(err.message);
     }
