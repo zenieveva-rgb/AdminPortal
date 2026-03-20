@@ -107,33 +107,14 @@ window.approveUser = async function(requestId, userEmail) {
         const tempPassword = "Temp12345";
 
         // ✅ Create Auth user FIRST
-        const userCredential = await createUserWithEmailAndPassword(auth, userEmail, tempPassword);
-        const uid = userCredential.user.uid;
+      const userCredential = await createUserWithEmailAndPassword(auth, userEmail, tempPassword);
+const uid = userCredential.user.uid;
 
-        // ✅ Get request data
-        const requestRef = ref(db, `pendingApprovals/${requestId}`);
-        const snapshot = await get(requestRef);
+const requestRef = ref(db, `pendingApprovals/${requestId}`);
+const snapshot = await get(requestRef);
 
-        if (!snapshot.exists()) {
-            throw new Error("Request not found");
-        }
-
-        const data = snapshot.val();
-
-        // ✅ Save to users
-        await set(ref(db, `users/${uid}`), {
-            ...data,
-            uid,
-            status: "approved",
-            approvedAt: serverTimestamp(),
-            approvedBy: auth.currentUser.email
-        });
-
-        // ✅ Remove from pending
-        await remove(requestRef);
-
-        alert("User approved!");
-
+await set(ref(db, `users/${uid}`), { ... });
+await remove(requestRef);
     } catch (err) {
         console.error("Approval error:", err);
         alert(err.message);
