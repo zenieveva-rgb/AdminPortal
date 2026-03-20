@@ -84,10 +84,8 @@ const uid = userCred.user.uid;
 const adminRef = ref(db, `users/${uid}`);
 const snap = await get(adminRef);
 
-if (!snap.exists() || snap.val().role !== "admin") {
-    alert("Access denied: Not an admin");
-
-    await signOut(auth);
+if (!snapshot.exists()) {
+    table.innerHTML = "<tr><td colspan='3'>No pending requests</td></tr>";
     return;
 }
 /* 🔹 LOAD REQUESTS */
