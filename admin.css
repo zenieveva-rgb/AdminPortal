@@ -1092,3 +1092,198 @@ input:checked + .slider:before {
     display: none; /* default hidden */
     /* other styles if needed */
 }
+/* Scan items for attendance tab */
+.scans-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.scan-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 20px;
+    background: var(--admin-card);
+    border: 1px solid var(--admin-border);
+    border-radius: 12px;
+    transition: all 0.3s;
+}
+
+.scan-item:hover {
+    border-color: var(--admin-primary);
+    transform: translateX(5px);
+}
+
+.scan-icon {
+    width: 45px;
+    height: 45px;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--admin-primary);
+    font-size: 1.2rem;
+}
+
+.scan-details {
+    flex: 1;
+}
+
+.scan-student {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 4px;
+}
+
+.scan-meta {
+    display: flex;
+    gap: 15px;
+    font-size: 0.85rem;
+    color: var(--admin-text-muted);
+}
+
+.scan-meta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.scan-status {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.scan-status.success {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--admin-success);
+}
+
+/* Scans filters */
+.scans-filters {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.admin-date-filter, .admin-select {
+    padding: 10px 15px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--admin-border);
+    border-radius: 10px;
+    color: var(--admin-text);
+    font-size: 0.95rem;
+    min-width: 200px;
+}
+
+.admin-date-filter:focus, .admin-select:focus {
+    outline: none;
+    border-color: var(--admin-primary);
+}
+
+/* Empty states */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--admin-text-muted);
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+}
+
+.empty-state span {
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+.empty-table {
+    text-align: center;
+    padding: 40px;
+    color: var(--admin-text-muted);
+}
+
+/* User detail view in modal */
+.user-detail-view {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.detail-section {
+    background: rgba(15, 23, 42, 0.4);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--admin-border);
+}
+
+.detail-section h4 {
+    margin-bottom: 15px;
+    color: var(--admin-primary);
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.detail-section p {
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+}
+
+.detail-section p strong {
+    color: var(--admin-text-muted);
+    display: inline-block;
+    width: 120px;
+}
+
+/* Secondary button */
+.btn-secondary {
+    padding: 12px 24px;
+    background: var(--admin-card);
+    border: 1px solid var(--admin-border);
+    border-radius: 10px;
+    color: var(--admin-text);
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.3s;
+}
+
+.btn-secondary:hover {
+    background: var(--admin-border);
+}
+
+/* View button */
+.action-btn.view {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--admin-primary);
+}
+
+.action-btn.view:hover {
+    background: var(--admin-primary);
+    color: white;
+}
+
+/* Refresh button spinning */
+.refresh-btn.spinning i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
