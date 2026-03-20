@@ -94,15 +94,21 @@ body, html {
     66% { transform: translate(-20px, 20px) rotate(240deg); }
 }
 
-/* ==================== LOGIN PAGE ==================== */
+
+/* Center login form vertically and horizontally */
 .admin-login-container {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 100%;
-    height: 100%;
+    height: 100vh;
     padding: 20px;
+    background: linear-gradient(135deg, var(--darkest), var(--darker));
+    position: relative;
+    z-index: 10;
 }
+
+/* Keep your existing styles for the card, logo, etc. */
 
 .admin-login-card {
     background: var(--admin-glass);
@@ -110,45 +116,18 @@ body, html {
     border: 1px solid var(--admin-border);
     border-radius: 24px;
     padding: 50px;
-    width: 100%;
     max-width: 450px;
+    width: 100%;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    animation: cardEntry 0.6s ease-out;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-@keyframes cardEntry {
-    from {
-        opacity: 0;
-        transform: translateY(30px) scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
+/* Center the logo and text */
 .admin-logo {
     text-align: center;
     margin-bottom: 40px;
-}
-
-.logo-shield {
-    width: 80px;
-    height: 80px;
-    background: linear-gradient(135deg, var(--admin-primary), var(--admin-secondary));
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.5rem;
-    margin: 0 auto 20px;
-    box-shadow: 0 10px 40px rgba(99, 102, 241, 0.4);
-    animation: shieldPulse 3s infinite;
-}
-
-@keyframes shieldPulse {
-    0%, 100% { box-shadow: 0 10px 40px rgba(99, 102, 241, 0.4); }
-    50% { box-shadow: 0 15px 50px rgba(99, 102, 241, 0.6); }
 }
 
 .admin-logo h1 {
@@ -158,26 +137,17 @@ body, html {
     margin-bottom: 8px;
 }
 
-.admin-logo h1 span {
+.admin-logo span {
     background: linear-gradient(135deg, var(--admin-primary), var(--admin-secondary));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
-.admin-logo p {
-    color: var(--admin-text-muted);
-    font-size: 0.95rem;
-}
-
-/* Form Styles */
-.admin-form {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
+/* Input groups */
 .admin-input-group {
     position: relative;
+    margin-bottom: 20px;
+    width: 100%;
 }
 
 .admin-input-group i {
@@ -187,12 +157,11 @@ body, html {
     transform: translateY(-50%);
     color: var(--admin-text-muted);
     font-size: 1.1rem;
-    transition: all 0.3s;
 }
 
 .admin-input-group input {
     width: 100%;
-    padding: 16px 18px 16px 50px;
+    padding: 16px 50px 16px 50px;
     background: rgba(15, 23, 42, 0.6);
     border: 2px solid var(--admin-border);
     border-radius: 12px;
@@ -208,11 +177,7 @@ body, html {
     box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
-.admin-input-group input:focus + i,
-.admin-input-group input:focus ~ i {
-    color: var(--admin-primary);
-}
-
+/* Toggle password button */
 .toggle-pass {
     position: absolute;
     right: 15px;
@@ -230,22 +195,7 @@ body, html {
     color: var(--admin-primary);
 }
 
-.input-glow {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--admin-primary), var(--admin-secondary));
-    transition: width 0.3s;
-}
-
-.admin-input-group input:focus ~ .input-glow {
-    width: 100%;
-}
-
-/* Submit Button */
+/* Submit button styles */
 .admin-submit {
     position: relative;
     width: 100%;
@@ -265,10 +215,6 @@ body, html {
 .admin-submit:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
-}
-
-.admin-submit:active {
-    transform: translateY(0);
 }
 
 .btn-effect {
@@ -300,23 +246,6 @@ body, html {
 
 .admin-submit.loading .btn-loader {
     opacity: 1;
-}
-
-/* Security Note */
-.admin-security-note {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 25px;
-    padding-top: 25px;
-    border-top: 1px solid var(--admin-border);
-    color: var(--admin-text-muted);
-    font-size: 0.9rem;
-}
-
-.admin-security-note i {
-    color: var(--admin-success);
 }
 
 /* ==================== DASHBOARD ==================== */
