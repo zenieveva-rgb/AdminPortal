@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal | SecretaryWeb Control</title>
+    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="admin-bg">
+        <div class="admin-grid"></div>
+        <div class="admin-shapes">
+            <div class="admin-shape shape-1"></div>
+            <div class="admin-shape shape-2"></div>
+        </div>
+    </div>
+
+    <!-- Login Container -->
+    <div class="admin-login-container" id="loginContainer">
+        <div class="admin-login-card">
+            <div class="admin-logo">
+                <div class="logo-shield">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h1>Admin<span>Portal</span></h1>
+                <p>SecretaryWeb Control Center</p>
+            </div>
+
+            <form id="adminLoginForm" class="admin-form">
+                <div class="admin-input-group">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <input type="email" id="adminEmail" required placeholder="Admin Email">
+                    <span class="input-glow"></span>
+                </div>
+
+                <div class="admin-input-group">
+                    <i class="fa-solid fa-key"></i>
+                    <input type="password" id="adminPassword" required placeholder="Password">
+                    <button type="button" class="toggle-pass" id="togglePass">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                    <span class="input-glow"></span>
+                </div>
+
+                <button type="submit" class="admin-submit" id="loginBtn">
+                    <span class="btn-text">Secure Login</span>
+                    <span class="btn-loader">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i>
+                    </span>
+                    <div class="btn-effect"></div>
+                </button>
+            </form>
+
+            <div class="admin-security-note">
+                <i class="fa-solid fa-lock"></i>
+                <span>Secure Admin Access Only</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard (Hidden initially) -->
+    <div class="admin-dashboard" id="dashboard" style="display: none;">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>Admin</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-tab="approvals">
+                    <i class="fa-solid fa-user-check"></i>
+                    <span>Approvals</span>
+                    <span class="nav-badge" id="approvalBadge">0</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="users">
+                    <i class="fa-solid fa-users"></i>
+                    <span>All Users</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="scans">
+                    <i class="fa-solid fa-barcode"></i>
+                    <span>Scan Activity</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="settings">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="admin-info">
+                    <div class="admin-avatar">
+                        <i class="fa-solid fa-user-tie"></i>
+                    </div>
+                    <div class="admin-details">
+                        <span class="admin-name" id="adminName">Admin</span>
+                        <span class="admin-role">Super Administrator</span>
+                    </div>
+                </div>
+                <button class="logout-btn" id="adminLogout">
+                    <i class="fa-solid fa-power-off"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- Header -->
+            <header class="admin-header">
+                <h2 id="pageTitle">Pending Approvals</h2>
+                <div class="header-actions">
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="searchUsers" placeholder="Search users...">
+                    </div>
+                    <button class="refresh-btn" id="refreshData">
+                        <i class="fa-solid fa-rotate"></i>
+                    </button>
+                    <button class="notif-btn" id="notifBtn">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="notif-badge" id="notifBadge">0</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Approvals Tab -->
+            <div class="tab-content active" id="approvalsTab">
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-icon pending">
+                            <i class="fa-solid fa-hourglass-half"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="pendingCount">0</span>
+                            <span class="stat-label">Pending</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon approved">
+                            <i class="fa-solid fa-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="approvedCount">0</span>
+                            <span class="stat-label">Approved</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon blocked">
+                            <i class="fa-solid fa-ban"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="blockedCount">0</span>
+                            <span class="stat-label">Blocked</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="users-grid" id="pendingUsers">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- All Users Tab -->
+            <div class="tab-content" id="usersTab">
+                <div class="users-table-container">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Department</th>
+                                <th>Status</th>
+                                <th>Joined</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allUsersTable">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Scans Tab -->
+            <div class="tab-content" id="scansTab">
+                <div class="scans-filters">
+                    <input type="date" id="scanDateFilter" class="admin-date-filter">
+                    <select id="scannerFilter" class="admin-select">
+                        <option value="">All Scanners</option>
+                    </select>
+                </div>
+                <div class="scans-list" id="adminScansList">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-content" id="settingsTab">
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <h3><i class="fa-solid fa-shield-halved"></i> Security Settings</h3>
+                        <div class="setting-item">
+                            <label>Require Admin Approval</label>
+                            <label class="switch">
+                                <input type="checkbox" id="requireApproval" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>Auto-block After Failed Logins</label>
+                            <input type="number" id="maxAttempts" value="5" min="3" max="10" class="admin-input">
+                        </div>
+                    </div>
+                    
+                    <div class="settings-card">
+                        <h3><i class="fa-solid fa-bell"></i> Notifications</h3>
+                        <div class="setting-item">
+                            <label>Email on New Signup</label>
+                            <label class="switch">
+                                <input type="checkbox" id="emailOnSignup" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>Daily Summary</label>
+                            <label class="switch">
+                                <input type="checkbox" id="dailySummary">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- User Detail Modal -->
+    <div class="user-modal" id="userModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>User Details</h3>
+                <button class="close-modal" id="closeUserModal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="userModalBody">
+                <!-- Populated by JS -->
+            </div>
+            <div class="modal-footer" id="userModalFooter">
+                <!-- Action buttons -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="admin-toast-container" id="toastContainer"></div>
+
+    <script type="module" src="admin.js"></script>
+</body>
+</html>
