@@ -32,19 +32,19 @@ const dashboard = document.getElementById("dashboard");
 const loginForm = document.getElementById("adminLoginForm");
 const logoutBtn = document.getElementById("logoutBtn");
 
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
+const email = document.getElementById("email");
+const password = document.getElementById("password");
 
 /* 🔹 LOGIN */
 loginForm.addEventListener("submit", (e) => {
     e.preventDefault();
 
-    signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value)
+    signInWithEmailAndPassword(auth, email.value, password.value)
         .then(() => alert("Login success"))
         .catch(err => alert(err.message));
 });
 
-/* 🔹 AUTH STATE */
+/* 🔹 AUTH */
 onAuthStateChanged(auth, (user) => {
     if (user) {
         loginContainer.classList.add("hidden");
@@ -56,7 +56,7 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-/* 🔹 LOAD REQUESTS */
+/* 🔹 LOAD USERS */
 function loadRequests() {
     const table = document.getElementById("usersTableBody");
 
@@ -81,6 +81,7 @@ function loadRequests() {
     });
 }
 
+/* 🔹 APPROVE USER (FIXED ERROR) */
 window.approveUser = async function(id, email) {
     try {
         let uid;
@@ -95,7 +96,7 @@ window.approveUser = async function(id, email) {
 
         } catch (error) {
             if (error.code === "auth/email-already-in-use") {
-                alert("User already exists. Continuing approval...");
+                alert("User already exists, continuing...");
             } else {
                 throw error;
             }
