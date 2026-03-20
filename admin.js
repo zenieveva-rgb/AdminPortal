@@ -1,16 +1,15 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
-import { ref, get } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
-window.ref = ref;
-window.get = get;
+
 import {
     getDatabase,
     ref,
     onValue,
     set,
     remove,
-    get, // ✅ MISSING
-    serverTimestamp // ✅ MISSING
+    get,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
+
 import {
     getAuth,
     signInWithEmailAndPassword,
@@ -112,13 +111,12 @@ const uid = userCredential.user.uid;
 const requestRef = ref(db, `pendingApprovals/${requestId}`);
 const snapshot = await get(requestRef);
 
-await set(ref(db, `users/${uid}`), { ... });
-await remove(requestRef);
-    } catch (err) {
-        console.error("Approval error:", err);
-        alert(err.message);
-    }
-};
+        await set(ref(db, `users/${uid}`), {
+    email: userEmail,
+    role: "user",
+    createdAt: Date.now()
+});
+
 /* 🔹 LOGOUT */
 logoutBtn.addEventListener("click", () => {
     signOut(auth);
