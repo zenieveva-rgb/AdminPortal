@@ -1,6 +1,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
-import { getDatabase } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
-
+import { 
+    getDatabase, 
+    ref, 
+    onValue 
+} from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
 function loadRequests() {
     const db = getDatabase();
     const requestsRef = ref(db, "requests");
@@ -212,18 +215,14 @@ function setupPasswordToggle() {
 function init() {
     console.log("Admin system ready");
 
-    // Login submit
     elements.loginForm.addEventListener('submit', handleLogin);
-
-    // Logout
     elements.logoutBtn.addEventListener('click', logout);
-
-    // Password toggle
     setupPasswordToggle();
 
-    // Check session
     if (!checkAuth()) {
         showLogin();
+    } else {
+        loadRequests(); // ✅ ADD THIS
     }
 }
 
