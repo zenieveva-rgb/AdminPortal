@@ -12,8 +12,45 @@
     <!-- Particle Background -->
     <div class="particles" id="particles"></div>
 
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
+ <!-- Toast Container -->
+    <div class="admin-toast-container" id="toastContainer"></div>
+
+    <!-- LOGIN CONTAINER - Must have id="loginContainer" -->
+    <div class="admin-login-container" id="loginContainer">
+        <div class="admin-login-card">
+            <div class="admin-logo">
+                <div class="logo-shield">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h1>Admin<span>Portal</span></h1>
+            </div>
+
+            <!-- Form MUST have id="adminLoginForm" -->
+            <form id="adminLoginForm" class="admin-form">
+                <div class="admin-input-group">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <!-- Input MUST have id="email" -->
+                    <input type="email" id="email" required placeholder="Admin Email" />
+                </div>
+                <div class="admin-input-group">
+                    <i class="fa-solid fa-key"></i>
+                    <!-- Input MUST have id="password" -->
+                    <input type="password" id="password" required placeholder="Password" />
+                    <!-- Button MUST have id="togglePass" -->
+                    <button type="button" class="toggle-pass" id="togglePass">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+                <!-- Button MUST have id="loginBtn" -->
+                <button type="submit" class="admin-submit" id="loginBtn">
+                    <span class="btn-text">Secure Login</span>
+                    <span class="btn-loader" style="display:none;">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i>
+                    </span>
+                </button>
+            </form>
+        </div>
+    </div>
 
     <!-- Main Dashboard -->
     <div class="dashboard-container" id="dashboardContainer">
