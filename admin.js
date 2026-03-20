@@ -44,7 +44,7 @@ loginForm.addEventListener("submit", (e) => {
         .catch(err => alert(err.message));
 });
 
-/* 🔹 AUTH */
+/* 🔹 AUTH STATE */
 onAuthStateChanged(auth, (user) => {
     if (user) {
         loginContainer.classList.add("hidden");
@@ -56,7 +56,7 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-/* 🔹 LOAD USERS */
+/* 🔹 LOAD REQUESTS */
 function loadRequests() {
     const table = document.getElementById("usersTableBody");
 
@@ -71,7 +71,7 @@ function loadRequests() {
                     <td>${data.email}</td>
                     <td>${data.status}</td>
                     <td>
-                        <button onclick="approveUser('${child.key}', '${data.email}')">
+                        <button class="approve-btn" onclick="approveUser('${child.key}', '${data.email}')">
                             Approve
                         </button>
                     </td>
@@ -81,7 +81,7 @@ function loadRequests() {
     });
 }
 
-/* 🔹 APPROVE USER (FIXED ERROR) */
+/* 🔹 APPROVE USER */
 window.approveUser = async function(id, email) {
     try {
         let uid;
@@ -96,7 +96,7 @@ window.approveUser = async function(id, email) {
 
         } catch (error) {
             if (error.code === "auth/email-already-in-use") {
-                alert("User already exists, continuing...");
+                alert("User already exists. Proceeding...");
             } else {
                 throw error;
             }
