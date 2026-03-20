@@ -95,27 +95,36 @@ function loadRequests() {
 }
 
 /* 🔹 APPROVE USER */
-window.approveUser = async function(id, email) {
+window.approveUser = async function(requestId, userEmail) {
     try {
-        // 1. Create auth user (ONLY NOW)
-        const tempPassword = "Temp12345";
-        const userCredential = await createUserWithEmailAndPassword(auth, email, tempPassword);
+        // Create Firebase Auth user with temporary password
+        const tempPassword = 'Temp12345'; // admin sets temp password
+        const userCredential = await createUserWithEmailAndPassword(auth, userEmail, tempPassword);
         const uid = userCredential.user.uid;
 
-        // 2. Save user in database
-        await set(ref(db, "users/" + uid), {
-            email,
-            role: "secretary",
-            status: "approved"
+        // Move request to users node with status approved
+        const requestRef = ref(db, `pendingApprovals/${requestId}`);
+        const snapshot = await get(requestRef);
+        if (!snapshot.exists()) throw new Error('Request not found');
+
+        const requestData = snapshot.val();
+
+        await set(ref(db, `users/${uid}`), {
+            ...requestData,
+            uid,
+            status: 'approved',
+            approvedAt: serverTimestamp(),
+            approvedBy: auth.currentUser.email
         });
 
-        // 3. Remove pending request
-        await remove(ref(db, "pendingApprovals/" + id));
+        // Remove from pending
+        await remove(requestRef);
 
-        alert("User approved!");
+        showToast('User approved successfully!', 'success');
 
     } catch (error) {
-        alert(error.message);
+        console.error('Approval error:', error);
+        showToast('Approval failed: ' + error.message, 'error');
     }
 };
 /* 🔹 LOGOUT */
