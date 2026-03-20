@@ -108,7 +108,7 @@ window.approveUser = async function(requestId, userEmail) {
         const userCredential = await createUserWithEmailAndPassword(auth, userEmail, tempPassword);
         const uid = userCredential.user.uid;
 
-        // Save to users
+        // Save to database
         await set(ref(db, `users/${uid}`), {
             email: userEmail,
             role: "user",
@@ -124,7 +124,7 @@ window.approveUser = async function(requestId, userEmail) {
         console.error("Approval error:", err);
         alert(err.message);
     }
-};
+}; // ✅ THIS WAS MISSING
 /* 🔹 LOGOUT */
 logoutBtn.addEventListener("click", () => {
     signOut(auth);
