@@ -6,7 +6,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
 function loadRequests() {
     const db = getDatabase();
-    const requestsRef = ref(db, "requests");
+   const requestsRef = ref(db, "pendingApprovals");
 
     onValue(requestsRef, (snapshot) => {
         const data = snapshot.val();
