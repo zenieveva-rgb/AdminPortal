@@ -88,3 +88,24 @@ window.approveUser = function(id) {
 logoutBtn.addEventListener("click", () => {
     signOut(auth);
 });
+
+window.approveUser = async function(id, email) {
+    const password = "Temp12345";
+
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const uid = userCredential.user.uid;
+
+        await set(ref(db, "users/" + uid), {
+            email: email,
+            role: "secretary",
+            status: "approved"
+        });
+
+        await remove(ref(db, "pendingApprovals/" + id));
+
+        alert("User approved!");
+    } catch (error) {
+        alert(error.message);
+    }
+};
