@@ -13,13 +13,14 @@ import {
 
 /* 🔹 Firebase Config */
 const firebaseConfig = {
-    apiKey: "YOUR_KEY",
-    authDomain: "database-98a70.firebaseapp.com",
-    databaseURL: "https://database-98a70-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "database-98a70",
-    storageBucket: "database-98a70.appspot.com",
-    messagingSenderId: "460345885965",
-    appId: "1:460345885965:web:890fb3653f670101af9c44"
+  apiKey: "AIzaSyBdlEvDlQ1qWr8xdL4bV25NW4RgcTajYqM",
+  authDomain: "database-98a70.firebaseapp.com",
+  databaseURL: "https://database-98a70-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "database-98a70",
+  storageBucket: "database-98a70.firebasestorage.app",
+  messagingSenderId: "460345885965",
+  appId: "1:460345885965:web:890fb3653f670101af9c44",
+  measurementId: "G-LK7BNN5FRF"
 };
 
 const app = initializeApp(firebaseConfig);
