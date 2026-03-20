@@ -97,32 +97,19 @@ function loadRequests() {
 /* 🔹 APPROVE USER */
 window.approveUser = async function(id, email) {
     try {
-        let uid;
+        // 1. Create auth user (ONLY NOW)
+        const tempPassword = "Temp12345";
+        const userCredential = await createUserWithEmailAndPassword(auth, email, tempPassword);
+        const uid = userCredential.user.uid;
 
-        try {
-            const userCredential = await createUserWithEmailAndPassword(
-                auth,
-                email,
-                "Temp12345"
-            );
-            uid = userCredential.user.uid;
+        // 2. Save user in database
+        await set(ref(db, "users/" + uid), {
+            email,
+            role: "secretary",
+            status: "approved"
+        });
 
-        } catch (error) {
-            if (error.code === "auth/email-already-in-use") {
-                alert("User already exists.");
-            } else {
-                throw error;
-            }
-        }
-
-        if (uid) {
-            await set(ref(db, "users/" + uid), {
-                email,
-                role: "secretary",
-                status: "approved"
-            });
-        }
-
+        // 3. Remove pending request
         await remove(ref(db, "pendingApprovals/" + id));
 
         alert("User approved!");
@@ -131,7 +118,6 @@ window.approveUser = async function(id, email) {
         alert(error.message);
     }
 };
-
 /* 🔹 LOGOUT */
 logoutBtn.addEventListener("click", () => {
     signOut(auth);
