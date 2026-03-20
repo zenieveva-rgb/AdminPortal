@@ -1,4 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
+import { ref, get } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
+window.ref = ref;
+window.get = get;
 import {
     getDatabase,
     ref,
