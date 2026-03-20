@@ -28,6 +28,10 @@ const password = document.getElementById("password");
 
 const loginForm = document.getElementById("adminLoginForm");
 
+loginForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    alert("Login button works");
+});
 loginForm.addEventListener("submit", async (e) => {
     e.preventDefault(); // 🔥 stops page refresh
 
