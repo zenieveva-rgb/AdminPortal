@@ -1,6 +1,7 @@
 // ============================================
-// SECRETARYWEB ADMIN PORTAL - COMPLETE SYSTEM
-// Firebase 9.17.1 Compatible
+// SECRETARYWEB ADMIN PORTAL
+// Compatible with existing Firebase Rules
+// Database: database-98a70 (Asia Southeast)
 // ============================================
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
@@ -21,50 +22,48 @@ import {
     update,
     remove,
     serverTimestamp,
-    query,
-    orderByChild
+    push,
+    child
 } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
 
 // ============================================
-// CONFIGURATION - REPLACE WITH YOUR FIREBASE CONFIG
+// YOUR FIREBASE CONFIG
 // ============================================
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",  // You need to get this from Firebase Console
+    apiKey: "AIzaSy...", // Get from Firebase Console → Project Settings
     authDomain: "database-98a70.firebaseapp.com",
     databaseURL: "https://database-98a70-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "database-98a70",
     storageBucket: "database-98a70.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",  // Get from Firebase Console
-    appId: "YOUR_APP_ID"  // Get from Firebase Console
+    messagingSenderId: "123456789", // Get from Console
+    appId: "1:123456789:web:abc123" // Get from Console
 };
+
 // ============================================
-// INITIALIZE FIREBASE
+// SUPER ADMIN CONFIG
 // ============================================
+const SUPER_ADMIN_EMAIL = 'depeddcp11@gmail.com';
+
+// Initialize
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
-
-// Set persistence to local (stay logged in)
 setPersistence(auth, browserLocalPersistence);
 
 // ============================================
 // DOM ELEMENTS
 // ============================================
 const elements = {
-    // Containers
     loginContainer: document.getElementById('loginContainer'),
     dashboard: document.getElementById('dashboard'),
     sidebar: document.getElementById('sidebar'),
-    
-    // Login form
     loginForm: document.getElementById('adminLoginForm'),
     emailInput: document.getElementById('email'),
     passwordInput: document.getElementById('password'),
     loginBtn: document.getElementById('loginBtn'),
     togglePassword: document.getElementById('togglePassword'),
-    
-    // Dashboard
     adminName: document.getElementById('adminName'),
+    adminRole: document.getElementById('adminRole'),
     logoutBtn: document.getElementById('logoutBtn'),
     menuToggle: document.getElementById('menuToggle'),
     refreshBtn: document.getElementById('refreshBtn'),
@@ -74,12 +73,23 @@ const elements = {
     approvedCount: document.getElementById('approvedCount'),
     blockedCount: document.getElementById('blockedCount'),
     totalCount: document.getElementById('totalCount'),
+    todayScans: document.getElementById('todayScans'),
     
-    // Table
+    // Tables
     usersTableBody: document.getElementById('usersTableBody'),
+    attendanceTableBody: document.getElementById('attendanceTableBody'),
+    scansTableBody: document.getElementById('scansTableBody'),
     emptyState: document.getElementById('emptyState'),
+    
+    // Search & Filter
     searchUsers: document.getElementById('searchUsers'),
     filterTabs: document.querySelectorAll('.filter-tab'),
+    tabButtons: document.querySelectorAll('.tab-btn'),
+    
+    // Sections
+    usersSection: document.getElementById('usersSection'),
+    attendanceSection: document.getElementById('attendanceSection'),
+    scansSection: document.getElementById('scansSection'),
     
     // Modals
     userModal: document.getElementById('userModal'),
@@ -96,200 +106,198 @@ const elements = {
 };
 
 // ============================================
-// STATE MANAGEMENT
+// STATE
 // ============================================
 let currentUser = null;
+let isSuperAdmin = false;
 let usersData = {};
+let attendanceData = {};
+let scansData = {};
 let currentFilter = 'all';
+let currentTab = 'users';
 let confirmCallback = null;
 
 // ============================================
 // AUTHENTICATION
 // ============================================
 
-// Auth State Listener
 onAuthStateChanged(auth, async (user) => {
-    console.log('Auth state changed:', user ? user.email : 'null');
+    console.log('Auth state:', user ? user.email : 'null');
     
     if (user) {
-        // Verify admin status
-        const isAdmin = await checkAdminStatus(user);
+        // Check if super admin or regular admin
+        isSuperAdmin = user.email === SUPER_ADMIN_EMAIL;
         
-        if (isAdmin) {
+        if (isSuperAdmin) {
+            // Super admin - auto access
             currentUser = user;
-            elements.adminName.textContent = user.email.split('@')[0];
+            setupAdminUI('Super Admin');
             showDashboard();
-            loadUsers();
+            loadAllData();
         } else {
-            await signOut(auth);
-            showToast('Access denied. Admin privileges required.', 'error');
-            showLogin();
+            // Check if regular admin in database
+            const adminRef = ref(db, `admins/${user.uid}`);
+            const snapshot = await get(adminRef);
+            
+            if (snapshot.exists()) {
+                currentUser = user;
+                setupAdminUI('Admin');
+                showDashboard();
+                loadAllData();
+            } else {
+                await signOut(auth);
+                showToast('Access denied. Not authorized.', 'error');
+                showLogin();
+            }
         }
     } else {
         currentUser = null;
+        isSuperAdmin = false;
         showLogin();
     }
 });
 
-// Check if user is admin
-async function checkAdminStatus(user) {
-    try {
-        // Check if user email is in admin list or has admin role in database
-        const adminRef = ref(db, `admins/${user.uid}`);
-        const snapshot = await get(adminRef);
-        
-        if (snapshot.exists()) {
-            return true;
-        }
-        
-        // Alternative: Check by email domain or specific email
-        const adminEmails = ['admin@secretaryweb.com', 'superadmin@secretaryweb.com']; // Add your admin emails
-        if (adminEmails.includes(user.email)) {
-            // Auto-add to admins node for future
-            await set(adminRef, {
-                email: user.email,
-                addedAt: serverTimestamp(),
-                role: 'admin'
-            });
-            return true;
-        }
-        
-        return false;
-    } catch (error) {
-        console.error('Error checking admin status:', error);
-        return false;
+function setupAdminUI(role) {
+    elements.adminName.textContent = currentUser.email.split('@')[0];
+    elements.adminRole.textContent = role;
+    
+    // Show/hide super admin features
+    if (!isSuperAdmin) {
+        // Regular admins can't manage other admins
+        document.querySelectorAll('.super-admin-only').forEach(el => el.style.display = 'none');
     }
 }
 
-// Login Form Handler
-if (elements.loginForm) {
-    elements.loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const email = elements.emailInput.value.trim();
-        const password = elements.passwordInput.value;
-        
-        if (!email || !password) {
-            showToast('Please enter both email and password', 'warning');
-            return;
-        }
-        
-        setLoading(true);
-        
-        try {
-            await signInWithEmailAndPassword(auth, email, password);
-            showToast('Login successful!', 'success');
-        } catch (error) {
-            console.error('Login error:', error);
-            showToast(getErrorMessage(error.code), 'error');
-        } finally {
-            setLoading(false);
-        }
-    });
-}
+// Login
+elements.loginForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = elements.emailInput.value.trim();
+    const password = elements.passwordInput.value;
+    
+    if (!email || !password) {
+        showToast('Please enter email and password', 'warning');
+        return;
+    }
+    
+    setLoading(true);
+    
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+        showToast('Welcome back!', 'success');
+    } catch (error) {
+        console.error('Login error:', error);
+        showToast(getErrorMessage(error.code), 'error');
+    } finally {
+        setLoading(false);
+    }
+});
 
-// Toggle Password Visibility
-if (elements.togglePassword) {
-    elements.togglePassword.addEventListener('click', () => {
-        const type = elements.passwordInput.type === 'password' ? 'text' : 'password';
-        elements.passwordInput.type = type;
-        
-        elements.togglePassword.innerHTML = type === 'password' 
-            ? '<i class="fa-solid fa-eye"></i>' 
-            : '<i class="fa-solid fa-eye-slash"></i>';
-    });
-}
+// Toggle password
+elements.togglePassword?.addEventListener('click', () => {
+    const type = elements.passwordInput.type === 'password' ? 'text' : 'password';
+    elements.passwordInput.type = type;
+    elements.togglePassword.innerHTML = type === 'password' 
+        ? '<i class="fa-solid fa-eye"></i>' 
+        : '<i class="fa-solid fa-eye-slash"></i>';
+});
 
-// Logout Handler
-if (elements.logoutBtn) {
-    elements.logoutBtn.addEventListener('click', async () => {
-        try {
-            await signOut(auth);
-            showToast('Logged out successfully', 'success');
-        } catch (error) {
-            showToast('Logout failed', 'error');
-        }
-    });
-}
+// Logout
+elements.logoutBtn?.addEventListener('click', async () => {
+    try {
+        await signOut(auth);
+        showToast('Logged out successfully', 'success');
+    } catch (error) {
+        showToast('Error logging out', 'error');
+    }
+});
 
 // ============================================
-// USER MANAGEMENT
+// DATA LOADING
 // ============================================
 
-// Load all users
+function loadAllData() {
+    loadUsers();
+    loadAttendance();
+    loadScans();
+}
+
 function loadUsers() {
     const usersRef = ref(db, 'users');
-    
     onValue(usersRef, (snapshot) => {
         usersData = snapshot.val() || {};
-        renderUsers();
+        if (currentTab === 'users') renderUsers();
         updateStats();
     }, (error) => {
-        console.error('Error loading users:', error);
+        console.error('Users load error:', error);
         showToast('Failed to load users', 'error');
     });
 }
 
-// Render users table
+function loadAttendance() {
+    const attendanceRef = ref(db, 'attendance');
+    onValue(attendanceRef, (snapshot) => {
+        attendanceData = snapshot.val() || {};
+        if (currentTab === 'attendance') renderAttendance();
+        updateTodayScans();
+    });
+}
+
+function loadScans() {
+    const scansRef = ref(db, 'scans');
+    onValue(scansRef, (snapshot) => {
+        scansData = snapshot.val() || {};
+        if (currentTab === 'scans') renderScans();
+    });
+}
+
+// ============================================
+// RENDER FUNCTIONS
+// ============================================
+
 function renderUsers() {
-    const searchTerm = elements.searchUsers.value.toLowerCase();
+    const searchTerm = elements.searchUsers?.value.toLowerCase() || '';
     let html = '';
-    let visibleCount = 0;
+    let count = 0;
     
+    // Sort by creation date (newest first)
     const sortedUsers = Object.entries(usersData).sort((a, b) => {
-        // Sort by creation date (newest first)
         return (b[1].createdAt || 0) - (a[1].createdAt || 0);
     });
     
     sortedUsers.forEach(([uid, user]) => {
-        // Apply filters
-        if (currentFilter !== 'all' && user.status !== currentFilter) {
-            return;
-        }
+        // Apply filter
+        if (currentFilter !== 'all' && user.status !== currentFilter) return;
         
         // Apply search
-        const searchFields = [
-            user.name || '',
-            user.email || '',
-            uid
-        ].join(' ').toLowerCase();
+        const searchStr = `${user.name || ''} ${user.email || ''} ${uid}`.toLowerCase();
+        if (searchTerm && !searchStr.includes(searchTerm)) return;
         
-        if (searchTerm && !searchFields.includes(searchTerm)) {
-            return;
-        }
-        
-        visibleCount++;
-        
+        count++;
         const status = user.status || 'pending';
-        const statusClass = `status-${status}`;
-        const createdDate = user.createdAt 
-            ? new Date(user.createdAt).toLocaleDateString() 
-            : 'N/A';
-        const lastLogin = user.lastLogin 
-            ? new Date(user.lastLogin).toLocaleDateString() 
-            : 'Never';
+        const created = user.createdAt ? formatDate(user.createdAt) : 'N/A';
+        const lastLogin = user.lastLogin ? formatDate(user.lastLogin) : 'Never';
         
-        // Determine action buttons based on status
-        let actionButtons = '';
-        
+        // Action buttons based on status
+        let actions = '';
         if (status === 'pending') {
-            actionButtons = `
-                <button class="action-btn approve" onclick="approveUser('${uid}')" title="Approve User">
+            actions = `
+                <button class="action-btn approve" onclick="approveUser('${uid}')" title="Approve">
                     <i class="fa-solid fa-check"></i>
                 </button>
-                <button class="action-btn block" onclick="blockUser('${uid}')" title="Block User">
+                <button class="action-btn block" onclick="blockUser('${uid}')" title="Block">
                     <i class="fa-solid fa-ban"></i>
                 </button>
             `;
         } else if (status === 'approved') {
-            actionButtons = `
-                <button class="action-btn block" onclick="blockUser('${uid}')" title="Block User">
+            actions = `
+                <button class="action-btn block" onclick="blockUser('${uid}')" title="Block">
                     <i class="fa-solid fa-ban"></i>
                 </button>
             `;
         } else if (status === 'blocked') {
-            actionButtons = `
-                <button class="action-btn unblock" onclick="unblockUser('${uid}')" title="Unblock User">
+            actions = `
+                <button class="action-btn unblock" onclick="unblockUser('${uid}')" title="Unblock">
                     <i class="fa-solid fa-unlock"></i>
                 </button>
             `;
@@ -307,16 +315,16 @@ function renderUsers() {
                     </div>
                 </td>
                 <td>${user.email || 'N/A'}</td>
-                <td><span class="status-badge ${statusClass}">${status}</span></td>
-                <td>${createdDate}</td>
+                <td><span class="status-badge status-${status}">${status}</span></td>
+                <td>${created}</td>
                 <td>${lastLogin}</td>
                 <td>
                     <div class="action-btns">
                         <button class="action-btn view" onclick="viewUser('${uid}')" title="View Details">
                             <i class="fa-solid fa-eye"></i>
                         </button>
-                        ${actionButtons}
-                        <button class="action-btn delete" onclick="confirmDeleteUser('${uid}')" title="Delete User">
+                        ${actions}
+                        <button class="action-btn delete" onclick="confirmDeleteUser('${uid}')" title="Delete">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
@@ -325,25 +333,84 @@ function renderUsers() {
         `;
     });
     
-    elements.usersTableBody.innerHTML = html || '';
-    elements.emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+    elements.usersTableBody.innerHTML = html;
+    elements.emptyState.style.display = count === 0 ? 'block' : 'none';
 }
 
-// Update statistics
+function renderAttendance() {
+    let html = '';
+    let count = 0;
+    
+    // Sort by time (newest first)
+    const sorted = Object.entries(attendanceData).sort((a, b) => {
+        return (b[1].time || 0) - (a[1].time || 0);
+    });
+    
+    sorted.forEach(([id, record]) => {
+        count++;
+        const time = record.time ? new Date(record.time).toLocaleString() : 'N/A';
+        
+        html += `
+            <tr>
+                <td>${record.studentName || 'Unknown'}</td>
+                <td>${record.grade || 'N/A'}</td>
+                <td>${record.section || 'N/A'}</td>
+                <td>${time}</td>
+                <td>${record.scannedBy || 'System'}</td>
+            </tr>
+        `;
+    });
+    
+    elements.attendanceTableBody.innerHTML = html || '<tr><td colspan="5" class="empty-cell">No attendance records</td></tr>';
+}
+
+function renderScans() {
+    let html = '';
+    
+    // Sort by timestamp
+    const sorted = Object.entries(scansData).sort((a, b) => {
+        return (b[1].timestamp || 0) - (a[1].timestamp || 0);
+    }).slice(0, 100); // Last 100 scans
+    
+    sorted.forEach(([id, scan]) => {
+        const time = scan.timestamp ? formatDate(scan.timestamp) : 'N/A';
+        
+        html += `
+            <tr>
+                <td>${scan.studentId || 'N/A'}</td>
+                <td>${scan.studentName || 'Unknown'}</td>
+                <td>${scan.type || 'Check-in'}</td>
+                <td>${time}</td>
+                <td><span class="status-badge status-${scan.status || 'success'}">${scan.status || 'success'}</span></td>
+            </tr>
+        `;
+    });
+    
+    elements.scansTableBody.innerHTML = html || '<tr><td colspan="5" class="empty-cell">No scan records</td></tr>';
+}
+
 function updateStats() {
     const users = Object.values(usersData);
-    
     elements.pendingCount.textContent = users.filter(u => u.status === 'pending').length;
     elements.approvedCount.textContent = users.filter(u => u.status === 'approved').length;
     elements.blockedCount.textContent = users.filter(u => u.status === 'blocked').length;
     elements.totalCount.textContent = users.length;
 }
 
+function updateTodayScans() {
+    const today = new Date().toDateString();
+    const todayCount = Object.values(attendanceData).filter(record => {
+        return record.time && new Date(record.time).toDateString() === today;
+    }).length;
+    
+    if (elements.todayScans) elements.todayScans.textContent = todayCount;
+}
+
 // ============================================
-// USER ACTIONS (Global functions for onclick)
+// USER ACTIONS
 // ============================================
 
-window.approveUser = async function(uid) {
+window.approveUser = async (uid) => {
     try {
         await update(ref(db, `users/${uid}`), {
             status: 'approved',
@@ -352,12 +419,12 @@ window.approveUser = async function(uid) {
         });
         showToast('User approved successfully', 'success');
     } catch (error) {
-        console.error('Error approving user:', error);
+        console.error('Approve error:', error);
         showToast('Failed to approve user', 'error');
     }
 };
 
-window.blockUser = async function(uid) {
+window.blockUser = async (uid) => {
     try {
         await update(ref(db, `users/${uid}`), {
             status: 'blocked',
@@ -366,37 +433,28 @@ window.blockUser = async function(uid) {
         });
         showToast('User blocked', 'warning');
     } catch (error) {
-        console.error('Error blocking user:', error);
         showToast('Failed to block user', 'error');
     }
 };
 
-window.unblockUser = async function(uid) {
+window.unblockUser = async (uid) => {
     try {
         await update(ref(db, `users/${uid}`), {
             status: 'pending',
             unblockedAt: serverTimestamp(),
             unblockedBy: currentUser.uid
         });
-        showToast('User unblocked. Status set to pending.', 'success');
+        showToast('User unblocked - status set to pending', 'success');
     } catch (error) {
-        console.error('Error unblocking user:', error);
         showToast('Failed to unblock user', 'error');
     }
 };
 
-window.viewUser = function(uid) {
+window.viewUser = (uid) => {
     const user = usersData[uid];
     if (!user) return;
     
-    const createdDate = user.createdAt 
-        ? new Date(user.createdAt).toLocaleString() 
-        : 'N/A';
-    const lastLogin = user.lastLogin 
-        ? new Date(user.lastLogin).toLocaleString() 
-        : 'Never';
-    
-    elements.modalBody.innerHTML = `
+    const details = `
         <div class="user-detail-grid">
             <div class="detail-item">
                 <span class="detail-label">User ID</span>
@@ -407,7 +465,7 @@ window.viewUser = function(uid) {
                 <span class="detail-value">${user.name || 'Not provided'}</span>
             </div>
             <div class="detail-item">
-                <span class="detail-label">Email Address</span>
+                <span class="detail-label">Email</span>
                 <span class="detail-value">${user.email || 'N/A'}</span>
             </div>
             <div class="detail-item">
@@ -418,34 +476,35 @@ window.viewUser = function(uid) {
             </div>
             <div class="detail-item">
                 <span class="detail-label">Account Created</span>
-                <span class="detail-value">${createdDate}</span>
+                <span class="detail-value">${user.createdAt ? formatDate(user.createdAt, true) : 'N/A'}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Last Login</span>
-                <span class="detail-value">${lastLogin}</span>
+                <span class="detail-value">${user.lastLogin ? formatDate(user.lastLogin, true) : 'Never'}</span>
             </div>
             ${user.approvedAt ? `
                 <div class="detail-item">
                     <span class="detail-label">Approved On</span>
-                    <span class="detail-value">${new Date(user.approvedAt).toLocaleString()}</span>
+                    <span class="detail-value">${formatDate(user.approvedAt, true)}</span>
                 </div>
             ` : ''}
             ${user.blockedAt ? `
                 <div class="detail-item">
                     <span class="detail-label">Blocked On</span>
-                    <span class="detail-value">${new Date(user.blockedAt).toLocaleString()}</span>
+                    <span class="detail-value">${formatDate(user.blockedAt, true)}</span>
                 </div>
             ` : ''}
         </div>
     `;
     
+    elements.modalBody.innerHTML = details;
     showModal(elements.userModal);
 };
 
-window.confirmDeleteUser = function(uid) {
+window.confirmDeleteUser = (uid) => {
     const user = usersData[uid];
-    elements.confirmTitle.textContent = 'Delete User';
-    elements.confirmMessage.textContent = `Are you sure you want to permanently delete ${user.name || user.email || 'this user'}? This action cannot be undone.`;
+    elements.confirmTitle.textContent = 'Delete User?';
+    elements.confirmMessage.textContent = `Permanently delete ${user.name || user.email || 'this user'}? This cannot be undone.`;
     
     confirmCallback = async () => {
         try {
@@ -453,12 +512,54 @@ window.confirmDeleteUser = function(uid) {
             showToast('User deleted permanently', 'success');
             hideModal(elements.confirmModal);
         } catch (error) {
-            console.error('Error deleting user:', error);
             showToast('Failed to delete user', 'error');
         }
     };
     
     showModal(elements.confirmModal);
+};
+
+// ============================================
+// SUPER ADMIN FUNCTIONS
+// ============================================
+
+window.addAdmin = async (email) => {
+    if (!isSuperAdmin) {
+        showToast('Super admin only', 'error');
+        return;
+    }
+    
+    // Find user by email
+    const userEntry = Object.entries(usersData).find(([uid, user]) => user.email === email);
+    if (!userEntry) {
+        showToast('User not found', 'error');
+        return;
+    }
+    
+    const [uid, user] = userEntry;
+    
+    try {
+        await set(ref(db, `admins/${uid}`), {
+            email: user.email,
+            addedBy: currentUser.uid,
+            addedAt: serverTimestamp(),
+            role: 'admin'
+        });
+        showToast(`${email} is now an admin`, 'success');
+    } catch (error) {
+        showToast('Failed to add admin', 'error');
+    }
+};
+
+window.removeAdmin = async (uid) => {
+    if (!isSuperAdmin) return;
+    
+    try {
+        await remove(ref(db, `admins/${uid}`));
+        showToast('Admin removed', 'success');
+    } catch (error) {
+        showToast('Failed to remove admin', 'error');
+    }
 };
 
 // ============================================
@@ -468,23 +569,19 @@ window.confirmDeleteUser = function(uid) {
 function showLogin() {
     elements.loginContainer.style.display = 'flex';
     elements.dashboard.style.display = 'none';
-    document.body.style.overflow = 'auto';
 }
 
 function showDashboard() {
     elements.loginContainer.style.display = 'none';
     elements.dashboard.style.display = 'flex';
-    document.body.style.overflow = 'auto';
 }
 
 function setLoading(loading) {
     if (!elements.loginBtn) return;
-    
     const btnText = elements.loginBtn.querySelector('.btn-text');
     const btnLoader = elements.loginBtn.querySelector('.btn-loader');
     
     elements.loginBtn.disabled = loading;
-    
     if (btnText) btnText.style.display = loading ? 'none' : 'inline';
     if (btnLoader) btnLoader.style.display = loading ? 'inline' : 'none';
 }
@@ -499,12 +596,48 @@ function hideModal(modal) {
     document.body.style.overflow = 'auto';
 }
 
+function formatDate(timestamp, includeTime = false) {
+    if (!timestamp) return 'N/A';
+    const date = new Date(timestamp);
+    if (includeTime) {
+        return date.toLocaleString();
+    }
+    return date.toLocaleDateString();
+}
+
 // ============================================
 // EVENT LISTENERS
 // ============================================
 
+// Tab switching
+elements.tabButtons?.forEach(btn => {
+    btn.addEventListener('click', () => {
+        elements.tabButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        currentTab = btn.dataset.tab;
+        
+        // Hide all sections
+        elements.usersSection.style.display = 'none';
+        elements.attendanceSection.style.display = 'none';
+        elements.scansSection.style.display = 'none';
+        
+        // Show active section
+        if (currentTab === 'users') {
+            elements.usersSection.style.display = 'block';
+            renderUsers();
+        } else if (currentTab === 'attendance') {
+            elements.attendanceSection.style.display = 'block';
+            renderAttendance();
+        } else if (currentTab === 'scans') {
+            elements.scansSection.style.display = 'block';
+            renderScans();
+        }
+    });
+});
+
 // Filter tabs
-elements.filterTabs.forEach(tab => {
+elements.filterTabs?.forEach(tab => {
     tab.addEventListener('click', () => {
         elements.filterTabs.forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
@@ -514,47 +647,31 @@ elements.filterTabs.forEach(tab => {
 });
 
 // Search
-if (elements.searchUsers) {
-    elements.searchUsers.addEventListener('input', () => {
-        renderUsers();
-    });
-}
+elements.searchUsers?.addEventListener('input', () => {
+    renderUsers();
+});
 
-// Refresh button
-if (elements.refreshBtn) {
-    elements.refreshBtn.addEventListener('click', () => {
-        elements.refreshBtn.classList.add('spinning');
-        loadUsers();
-        setTimeout(() => {
-            elements.refreshBtn.classList.remove('spinning');
-            showToast('Data refreshed', 'success');
-        }, 1000);
-    });
-}
+// Refresh
+elements.refreshBtn?.addEventListener('click', () => {
+    elements.refreshBtn.classList.add('spinning');
+    loadAllData();
+    setTimeout(() => elements.refreshBtn.classList.remove('spinning'), 1000);
+    showToast('Data refreshed', 'success');
+});
 
-// Mobile menu toggle
-if (elements.menuToggle) {
-    elements.menuToggle.addEventListener('click', () => {
-        elements.sidebar.classList.toggle('active');
-    });
-}
+// Mobile menu
+elements.menuToggle?.addEventListener('click', () => {
+    elements.sidebar?.classList.toggle('active');
+});
 
-// Modal close buttons
-if (elements.closeModal) {
-    elements.closeModal.addEventListener('click', () => hideModal(elements.userModal));
-}
+// Modal controls
+elements.closeModal?.addEventListener('click', () => hideModal(elements.userModal));
+elements.confirmCancel?.addEventListener('click', () => hideModal(elements.confirmModal));
+elements.confirmAction?.addEventListener('click', () => {
+    if (confirmCallback) confirmCallback();
+});
 
-if (elements.confirmCancel) {
-    elements.confirmCancel.addEventListener('click', () => hideModal(elements.confirmModal));
-}
-
-if (elements.confirmAction) {
-    elements.confirmAction.addEventListener('click', () => {
-        if (confirmCallback) confirmCallback();
-    });
-}
-
-// Close modals on outside click
+// Close on outside click
 window.addEventListener('click', (e) => {
     if (e.target === elements.userModal) hideModal(elements.userModal);
     if (e.target === elements.confirmModal) hideModal(elements.confirmModal);
@@ -585,52 +702,36 @@ function showToast(message, type = 'info') {
     
     elements.toastContainer.appendChild(toast);
     
-    // Auto remove after 4 seconds
     setTimeout(() => {
-        if (toast.parentElement) {
-            toast.style.animation = 'toastSlide 0.3s ease reverse';
-            setTimeout(() => toast.remove(), 300);
-        }
+        toast.style.animation = 'toastSlide 0.3s ease reverse';
+        setTimeout(() => toast.remove(), 300);
     }, 4000);
 }
 
-// ============================================
-// ERROR HANDLING
-// ============================================
-
 function getErrorMessage(code) {
     const errors = {
-        'auth/invalid-email': 'Invalid email address format',
-        'auth/user-disabled': 'This account has been disabled',
-        'auth/user-not-found': 'No account found with this email',
+        'auth/invalid-email': 'Invalid email address',
+        'auth/user-disabled': 'Account disabled',
+        'auth/user-not-found': 'No account found',
         'auth/wrong-password': 'Incorrect password',
         'auth/invalid-credential': 'Invalid email or password',
-        'auth/too-many-requests': 'Too many failed attempts. Please try again later',
-        'auth/network-request-failed': 'Network error. Check your connection',
-        'auth/weak-password': 'Password should be at least 6 characters',
-        'auth/email-already-in-use': 'Email is already registered'
+        'auth/too-many-requests': 'Too many attempts. Try later',
+        'auth/network-request-failed': 'Network error'
     };
-    
     return errors[code] || 'An error occurred. Please try again';
 }
 
-// Global error handler
-window.onerror = function(msg, url, line, col, error) {
-    console.error('Global error:', { msg, url, line, col, error });
-    return false;
-};
-
 // ============================================
-// INITIALIZATION
+// INIT
 // ============================================
 
-console.log('✅ Admin Portal loaded successfully');
-console.log('Firebase version: 9.17.1');
+console.log('✅ SecretaryWeb Admin Portal loaded');
+console.log('Database:', firebaseConfig.databaseURL);
+console.log('Super Admin:', SUPER_ADMIN_EMAIL);
 
-// Check if all critical elements exist
-const criticalElements = ['loginContainer', 'dashboard', 'loginForm', 'usersTableBody'];
-const missing = criticalElements.filter(id => !document.getElementById(id));
-
+// Check for missing elements
+const critical = ['loginContainer', 'dashboard', 'loginForm', 'usersTableBody'];
+const missing = critical.filter(id => !document.getElementById(id));
 if (missing.length > 0) {
-    console.error('Missing critical elements:', missing);
+    console.error('Missing elements:', missing);
 }
