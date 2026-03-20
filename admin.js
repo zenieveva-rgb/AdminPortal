@@ -132,3 +132,4 @@ window.approveUser = async function(id, email) {
 logoutBtn.addEventListener("click", () => {
     signOut(auth);
 });
+console.log("Admin JS loaded");
