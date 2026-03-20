@@ -9,6 +9,83 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- DASHBOARD CONTAINER - ADD THIS -->
+    <div class="admin-dashboard" id="dashboard" style="display: none;">
+        <!-- Header -->
+        <header class="admin-header">
+            <div class="admin-logo">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>Admin Portal</span>
+            </div>
+            <div class="admin-actions">
+                <button id="refreshBtn" class="admin-btn secondary">
+                    <i class="fa-solid fa-rotate"></i> Refresh
+                </button>
+                <button id="logoutBtn" class="admin-btn danger">
+                    <i class="fa-solid fa-right-from-bracket"></i> Logout
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats Cards -->
+        <div class="admin-stats">
+            <div class="stat-card">
+                <div class="stat-icon pending"><i class="fa-solid fa-clock"></i></div>
+                <div class="stat-info">
+                    <h3 id="pendingCount">0</h3>
+                    <p>Pending</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon approved"><i class="fa-solid fa-check"></i></div>
+                <div class="stat-info">
+                    <h3 id="approvedCount">0</h3>
+                    <p>Approved</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon blocked"><i class="fa-solid fa-ban"></i></div>
+                <div class="stat-info">
+                    <h3 id="blockedCount">0</h3>
+                    <p>Blocked</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon total"><i class="fa-solid fa-users"></i></div>
+                <div class="stat-info">
+                    <h3 id="totalCount">0</h3>
+                    <p>Total Users</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="admin-table-container">
+            <div class="table-header">
+                <h2><i class="fa-solid fa-users-gear"></i> User Management</h2>
+                <div class="table-filters">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="pending">Pending</button>
+                    <button class="filter-btn" data-filter="approved">Approved</button>
+                    <button class="filter-btn" data-filter="blocked">Blocked</button>
+                </div>
+            </div>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Registered</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <!-- Users loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
     <!-- Particle Background -->
     <div class="particles" id="particles"></div>
 
