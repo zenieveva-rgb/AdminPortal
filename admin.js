@@ -8,10 +8,9 @@ import {
 import { 
     getAuth, 
     signInWithEmailAndPassword,
-    signOut,
-    onAuthStateChanged
+    onAuthStateChanged,
+    signOut
 } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
-
 
 // ============================================
 // FIREBASE CONFIG
@@ -26,86 +25,61 @@ const firebaseConfig = {
     appId: "1:460345885965:web:8484da766b979a0eaf9c44"
 };
 
-// ============================================
-// INIT FIREBASE
-// ============================================
+// INIT
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
 
 // ============================================
-// DOM ELEMENTS
+// DOM
 // ============================================
-const elements = {
-    loginContainer: document.getElementById('loginContainer'),
-    dashboard: document.getElementById('dashboard'),
-    loginForm: document.getElementById('adminLoginForm'),
-    emailInput: document.getElementById('email'),
-    passwordInput: document.getElementById('password'),
-    logoutBtn: document.getElementById('logoutBtn'),
-    adminName: document.getElementById('adminName')
-};
+const loginContainer = document.getElementById("loginContainer");
+const dashboard = document.getElementById("dashboard");
+const loginForm = document.getElementById("adminLoginForm");
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const logoutBtn = document.getElementById("logoutBtn");
 
 // ============================================
-// UI
+// LOGIN
 // ============================================
-function showLogin() {
-    elements.loginContainer.style.display = 'flex';
-    elements.dashboard.style.display = 'none';
-}
-
-function showDashboard() {
-    elements.loginContainer.style.display = 'none';
-    elements.dashboard.style.display = 'flex';
-}
-
-// ============================================
-// TOAST
-// ============================================
-function showToast(msg) {
-    alert(msg);
-}
-
-// ============================================
-// LOGIN (FIREBASE)
-// ============================================
-function handleLogin(e) {
+loginForm.addEventListener("submit", (e) => {
     e.preventDefault();
 
-    const email = elements.emailInput.value;
-    const password = elements.passwordInput.value;
+    const email = emailInput.value;
+    const password = passwordInput.value;
 
     signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-            console.log("Logged in:", userCredential.user);
-            showToast("Login successful");
+        .then(() => {
+            alert("Login successful");
         })
         .catch((error) => {
-            console.error(error);
-            showToast("Login failed: " + error.message);
+            alert("Login failed: " + error.message);
         });
-}
+});
 
 // ============================================
-// LOGOUT
+// AUTH STATE
 // ============================================
-function logout() {
-    signOut(auth).then(() => {
-        showToast("Logged out");
-    });
-}
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        showDashboard();
+        loadRequests();
+    } else {
+        showLogin();
+    }
+});
 
 // ============================================
-// LOAD REQUESTS (REALTIME)
+// LOAD REQUESTS (THIS IS THE IMPORTANT PART)
 // ============================================
 function loadRequests() {
     const requestsRef = ref(db, "pendingApprovals");
 
     onValue(requestsRef, (snapshot) => {
         const data = snapshot.val();
-        console.log("DATA:", data);
-
         const table = document.getElementById("usersTableBody");
+
         table.innerHTML = "";
 
         if (!data) {
@@ -116,12 +90,12 @@ function loadRequests() {
         Object.entries(data).forEach(([id, req]) => {
             table.innerHTML += `
                 <tr>
-                    <td>${req.name || "N/A"}</td>
-                    <td>${req.email || "N/A"}</td>
-                    <td>${req.status || "pending"}</td>
-                    <td>${req.timestamp ? new Date(req.timestamp).toLocaleString() : ""}</td>
+                    <td>${req.firstName || ''} ${req.lastName || ''}</td>
+                    <td>${req.email}</td>
+                    <td>${req.status}</td>
+                    <td>${new Date(req.requestedAt).toLocaleString()}</td>
                     <td>
-                        <button onclick="approve('${id}')">Approve</button>
+                        <button onclick="approveUser('${id}')">Approve</button>
                     </td>
                 </tr>
             `;
@@ -130,27 +104,21 @@ function loadRequests() {
 }
 
 // ============================================
-// AUTH STATE LISTENER (IMPORTANT)
+// LOGOUT
 // ============================================
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        console.log("User authenticated:", user.email);
-
-        elements.adminName.textContent = user.email;
-
-        showDashboard();
-        loadRequests(); // 🔥 AUTO LOAD DATA
-    } else {
-        showLogin();
-    }
+logoutBtn.addEventListener("click", () => {
+    signOut(auth);
 });
 
 // ============================================
-// INIT
+// UI
 // ============================================
-function init() {
-    elements.loginForm.addEventListener('submit', handleLogin);
-    elements.logoutBtn.addEventListener('click', logout);
+function showDashboard() {
+    loginContainer.style.display = "none";
+    dashboard.style.display = "flex";
 }
 
-document.addEventListener('DOMContentLoaded', init);
+function showLogin() {
+    loginContainer.style.display = "flex";
+    dashboard.style.display = "none";
+}
