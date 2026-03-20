@@ -51,6 +51,9 @@ loginForm.addEventListener("submit", async (e) => {
 
     try {
         console.log("Attempting login...");
+        console.log("Logging in:", email.value);
+        console.log("Snapshot exists?", snap.exists());
+        console.log("Role:", snap.val() && snap.val().role);
 
         // 1️⃣ Sign in with email/password
         const userCred = await signInWithEmailAndPassword(auth, email.value, password.value);
@@ -142,6 +145,3 @@ window.approveUser = async function(requestId, userEmail) {
 logoutBtn.addEventListener("click", () => {
     signOut(auth);
 });
-console.log("Logging in:", email.value);
-console.log("Snapshot exists?", snap.exists());
-console.log("Role:", snap.val() && snap.val().role);
