@@ -4,38 +4,15 @@ import {
     ref, 
     onValue 
 } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
+
 import { 
-  getAuth, 
-  signInWithEmailAndPassword 
+    getAuth, 
+    signInWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
 
-function loadRequests() {
-    const db = getDatabase();
-   const requestsRef = ref(db, "pendingApprovals");
 
-    onValue(requestsRef, (snapshot) => {
-        const data = snapshot.val();
-        const table = document.getElementById("usersTableBody");
-
-        table.innerHTML = "";
-
-        if (data) {
-            Object.entries(data).forEach(([id, req]) => {
-                table.innerHTML += `
-                    <tr>
-                        <td>${req.name}</td>
-                        <td>${req.email}</td>
-                        <td>${req.status}</td>
-                        <td>${new Date(req.timestamp).toLocaleString()}</td>
-                        <td>
-                            <button onclick="approve('${id}')">Approve</button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-    });
-}
 // ============================================
 // FIREBASE CONFIG
 // ============================================
@@ -49,32 +26,12 @@ const firebaseConfig = {
     appId: "1:460345885965:web:8484da766b979a0eaf9c44"
 };
 
-function handleLogin(e) {
-    e.preventDefault();
-
-    const email = elements.emailInput.value;
-    const password = elements.passwordInput.value;
-
-    signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-            console.log("Logged in:", userCredential.user);
-
-            showDashboard();
-
-            loadRequests(); // 🔥 VERY IMPORTANT
-
-            showToast("Login successful");
-        })
-        .catch((error) => {
-            console.error(error);
-            showToast("Login failed: " + error.message);
-        });
-}
 // ============================================
 // INIT FIREBASE
 // ============================================
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+const auth = getAuth(app);
 
 // ============================================
 // DOM ELEMENTS
@@ -85,27 +42,12 @@ const elements = {
     loginForm: document.getElementById('adminLoginForm'),
     emailInput: document.getElementById('email'),
     passwordInput: document.getElementById('password'),
-    loginBtn: document.getElementById('loginBtn'),
-    togglePassword: document.getElementById('togglePassword'),
     logoutBtn: document.getElementById('logoutBtn'),
     adminName: document.getElementById('adminName')
 };
 
 // ============================================
-// GLOBAL STATE
-// ============================================
-let isAuthenticated = false;
-const SESSION_TIMEOUT = 8 * 60 * 60 * 1000;
-
-// ============================================
-// TOAST (SIMPLE)
-// ============================================
-function showToast(message, type = "info") {
-    alert(message); // Replace with custom UI if needed
-}
-
-// ============================================
-// SHOW/HIDE UI
+// UI
 // ============================================
 function showLogin() {
     elements.loginContainer.style.display = 'flex';
@@ -118,133 +60,97 @@ function showDashboard() {
 }
 
 // ============================================
-// SESSION HANDLING
+// TOAST
 // ============================================
-function startSessionTimer() {
-    setTimeout(() => {
-        logout();
-        showToast("Session expired");
-    }, SESSION_TIMEOUT);
-}
-
-function checkAuth() {
-    const session = localStorage.getItem('admin_session');
-
-    if (!session) return false;
-
-    try {
-        const data = JSON.parse(session);
-
-        if (Date.now() < data.expiry) {
-            isAuthenticated = true;
-            elements.adminName.textContent = data.username;
-            showDashboard();
-            startSessionTimer();
-            return true;
-        } else {
-            localStorage.removeItem('admin_session');
-        }
-    } catch (e) {
-        localStorage.removeItem('admin_session');
-    }
-
-    return false;
+function showToast(msg) {
+    alert(msg);
 }
 
 // ============================================
-// LOGIN
+// LOGIN (FIREBASE)
 // ============================================
 function handleLogin(e) {
     e.preventDefault();
 
-    const email = elements.emailInput.value.trim();
+    const email = elements.emailInput.value;
     const password = elements.passwordInput.value;
 
-    if (!email || !password) {
-        showToast("Enter credentials");
-        return;
-    }
-
-    setLoginLoading(true);
-
-    setTimeout(() => {
-        if (
-            email === ADMIN_CREDENTIALS.email &&
-            password === ADMIN_CREDENTIALS.password
-        ) {
-            const session = {
-                username: "Developer Admin",
-                expiry: Date.now() + SESSION_TIMEOUT
-            };
-
-            localStorage.setItem('admin_session', JSON.stringify(session));
-
-            isAuthenticated = true;
-            elements.adminName.textContent = "Developer Admin";
-
-            showDashboard();
-            startSessionTimer();
-
+    signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+            console.log("Logged in:", userCredential.user);
             showToast("Login successful");
-
-            elements.emailInput.value = "";
-            elements.passwordInput.value = "";
-        } else {
-            showToast("Invalid credentials");
-        }
-
-        setLoginLoading(false);
-    }, 500);
+        })
+        .catch((error) => {
+            console.error(error);
+            showToast("Login failed: " + error.message);
+        });
 }
 
 // ============================================
 // LOGOUT
 // ============================================
 function logout() {
-    localStorage.removeItem('admin_session');
-    isAuthenticated = false;
-    showLogin();
-    showToast("Logged out");
-}
-
-// ============================================
-// BUTTON LOADING
-// ============================================
-function setLoginLoading(loading) {
-    if (!elements.loginBtn) return;
-
-    elements.loginBtn.disabled = loading;
-    elements.loginBtn.textContent = loading ? "Logging in..." : "Login";
-}
-
-// ============================================
-// PASSWORD TOGGLE
-// ============================================
-function setupPasswordToggle() {
-    elements.togglePassword.addEventListener('click', () => {
-        const type = elements.passwordInput.type === 'password' ? 'text' : 'password';
-        elements.passwordInput.type = type;
+    signOut(auth).then(() => {
+        showToast("Logged out");
     });
 }
+
+// ============================================
+// LOAD REQUESTS (REALTIME)
+// ============================================
+function loadRequests() {
+    const requestsRef = ref(db, "pendingApprovals");
+
+    onValue(requestsRef, (snapshot) => {
+        const data = snapshot.val();
+        console.log("DATA:", data);
+
+        const table = document.getElementById("usersTableBody");
+        table.innerHTML = "";
+
+        if (!data) {
+            table.innerHTML = "<tr><td colspan='5'>No requests found</td></tr>";
+            return;
+        }
+
+        Object.entries(data).forEach(([id, req]) => {
+            table.innerHTML += `
+                <tr>
+                    <td>${req.name || "N/A"}</td>
+                    <td>${req.email || "N/A"}</td>
+                    <td>${req.status || "pending"}</td>
+                    <td>${req.timestamp ? new Date(req.timestamp).toLocaleString() : ""}</td>
+                    <td>
+                        <button onclick="approve('${id}')">Approve</button>
+                    </td>
+                </tr>
+            `;
+        });
+    });
+}
+
+// ============================================
+// AUTH STATE LISTENER (IMPORTANT)
+// ============================================
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        console.log("User authenticated:", user.email);
+
+        elements.adminName.textContent = user.email;
+
+        showDashboard();
+        loadRequests(); // 🔥 AUTO LOAD DATA
+    } else {
+        showLogin();
+    }
+});
 
 // ============================================
 // INIT
 // ============================================
 function init() {
-    console.log("Admin system ready");
-
     elements.loginForm.addEventListener('submit', handleLogin);
     elements.logoutBtn.addEventListener('click', logout);
-    setupPasswordToggle();
-
-    if (!checkAuth()) {
-        showLogin();
-    } else {
-        loadRequests(); // ✅ ADD THIS
-    }
 }
 
-// ============================================
-// START
-// ============================================
 document.addEventListener('DOMContentLoaded', init);
