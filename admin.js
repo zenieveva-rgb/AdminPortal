@@ -47,13 +47,17 @@ const password = document.getElementById("password");
 
 /* 🔹 LOGIN */
 loginForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
+    e.preventDefault(); // prevent form refresh
 
     try {
+        console.log("Attempting login...");
+
+        // 1️⃣ Sign in with email/password
         const userCred = await signInWithEmailAndPassword(auth, email.value, password.value);
         const uid = userCred.user.uid;
+        console.log("Login success. UID:", uid);
 
-        // 🔐 Check if admin
+        // 2️⃣ Check if user is admin in database
         const snap = await get(ref(db, `users/${uid}`));
         if (!snap.exists() || snap.val().role !== "admin") {
             alert("Access denied: Not an admin");
@@ -61,14 +65,15 @@ loginForm.addEventListener("submit", async (e) => {
             return;
         }
 
-        // ✅ Show dashboard
+        // 3️⃣ Show dashboard
         loginContainer.classList.add("hidden");
         dashboard.classList.remove("hidden");
 
+        // 4️⃣ Load pending requests
         loadRequests();
 
     } catch (err) {
-        console.error("LOGIN ERROR:", err);
+        console.error("Login error:", err);
         alert(err.message);
     }
 });
