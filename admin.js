@@ -81,26 +81,38 @@ function loadRequests() {
     });
 }
 
-/* 🔹 APPROVE USER */
 window.approveUser = async function(id, email) {
     try {
-        const userCredential = await createUserWithEmailAndPassword(
-            auth,
-            email,
-            "Temp12345"
-        );
+        let uid;
 
-        const uid = userCredential.user.uid;
+        try {
+            const userCredential = await createUserWithEmailAndPassword(
+                auth,
+                email,
+                "Temp12345"
+            );
+            uid = userCredential.user.uid;
 
-        await set(ref(db, "users/" + uid), {
-            email: email,
-            role: "secretary",
-            status: "approved"
-        });
+        } catch (error) {
+            if (error.code === "auth/email-already-in-use") {
+                alert("User already exists. Continuing approval...");
+            } else {
+                throw error;
+            }
+        }
+
+        if (uid) {
+            await set(ref(db, "users/" + uid), {
+                email,
+                role: "secretary",
+                status: "approved"
+            });
+        }
 
         await remove(ref(db, "pendingApprovals/" + id));
 
         alert("User approved!");
+
     } catch (error) {
         alert(error.message);
     }
