@@ -26,12 +26,11 @@ const firebaseConfig = {
 };
 
 // ============================================
-// BUILT-IN ADMIN CREDENTIALS
+// BUILT-IN ADMIN CREDENTIALS (FIXED - USE THIS ONLY)
 // ============================================
 const ADMIN_CREDENTIALS = {
-    username: "developer",
-    password: "developer1245",
-    email: "developer@admin.com"
+    email: "developer@admin.com",  // Login with email
+    password: "developer1245"
 };
 
 // ============================================
@@ -110,6 +109,32 @@ let confirmCallback = null;
 // Session timeout (8 hours)
 const SESSION_TIMEOUT = 8 * 60 * 60 * 1000;
 
+// ============================================
+// SIMPLE LOGIN FUNCTION (HARDCODED EMAIL/PASSWORD)
+// ============================================
+function checkAuth() {
+    const session = localStorage.getItem('admin_session');
+    if (session) {
+        try {
+            const { expiry, username } = JSON.parse(session);
+            if (Date.now() < expiry) {
+                isAuthenticated = true;
+                setupAdminUI(username);
+                showDashboard();
+                loadAllData();
+                startSessionTimer();
+                return true;
+            } else {
+                localStorage.removeItem('admin_session');
+                showToast('Session expired. Please login again.', 'warning');
+            }
+        } catch (error) {
+            console.error('Session error:', error);
+            localStorage.removeItem('admin_session');
+        }
+    }
+    return false;
+}
 // ============================================
 // SIMPLE LOGIN FUNCTION
 // ============================================
