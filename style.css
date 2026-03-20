@@ -1,3 +1,161 @@
+/* RESET */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Segoe UI", sans-serif;
+}
+
 body {
-    background: red;
+    background: #0f172a;
+    color: white;
+}
+
+/* LOGIN */
+.login-container {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #020617, #1e293b);
+}
+
+.login-card {
+    background: #1e293b;
+    padding: 40px;
+    border-radius: 12px;
+    width: 320px;
+    text-align: center;
+    animation: slideUp 0.5s ease;
+}
+
+.login-card h1 {
+    margin-bottom: 20px;
+}
+
+.login-card span {
+    color: #3b82f6;
+}
+
+.login-form input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    color: white;
+}
+
+.login-form button {
+    width: 100%;
+    padding: 12px;
+    background: #3b82f6;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.login-form button:hover {
+    background: #2563eb;
+    transform: scale(1.05);
+}
+
+/* DASHBOARD */
+.dashboard {
+    padding: 20px;
+    animation: fadeIn 0.5s ease;
+}
+
+.hidden {
+    display: none;
+}
+
+/* HEADER */
+.header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+/* LOGOUT */
+#logoutBtn {
+    background: #ef4444;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+#logoutBtn:hover {
+    background: #dc2626;
+    transform: scale(1.05);
+}
+
+/* TABLE */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #1e293b;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+th {
+    background: #020617;
+    padding: 12px;
+    text-align: left;
+}
+
+td {
+    padding: 12px;
+}
+
+tr {
+    border-bottom: 1px solid #334155;
+    transition: 0.3s;
+}
+
+tr:hover {
+    background: #334155;
+}
+
+/* BUTTON */
+button {
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    transform: scale(1.05);
+}
+
+/* APPROVE BUTTON */
+.approve-btn {
+    background: #10b981;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 5px;
+    color: white;
+}
+
+/* ANIMATIONS */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
