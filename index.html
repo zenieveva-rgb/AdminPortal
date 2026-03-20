@@ -150,7 +150,75 @@
                     </div>
                 </div>
             </div>
+<!-- Add inside <main class="main-content"> after the stats grid -->
 
+<!-- TABS -->
+<div class="content-tabs">
+    <button class="tab-btn active" data-tab="users">
+        <i class="fa-solid fa-users"></i> Users
+    </button>
+    <button class="tab-btn" data-tab="attendance">
+        <i class="fa-solid fa-clipboard-check"></i> Attendance
+    </button>
+    <button class="tab-btn" data-tab="scans">
+        <i class="fa-solid fa-qrcode"></i> Scan Logs
+    </button>
+</div>
+
+<!-- USERS SECTION (existing, add id) -->
+<div id="usersSection" class="tab-section">
+    <!-- Your existing users table code here -->
+</div>
+
+<!-- ATTENDANCE SECTION -->
+<div id="attendanceSection" class="tab-section" style="display: none;">
+    <div class="content-section">
+        <div class="section-header">
+            <h3><i class="fa-solid fa-clipboard-list"></i> Attendance Records</h3>
+        </div>
+        <div class="table-container">
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>Student Name</th>
+                        <th>Grade</th>
+                        <th>Section</th>
+                        <th>Time</th>
+                        <th>Scanned By</th>
+                    </tr>
+                </thead>
+                <tbody id="attendanceTableBody">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- SCANS SECTION -->
+<div id="scansSection" class="tab-section" style="display: none;">
+    <div class="content-section">
+        <div class="section-header">
+            <h3><i class="fa-solid fa-barcode"></i> QR Scan Logs</h3>
+        </div>
+        <div class="table-container">
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="scansTableBody">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
             <!-- Users Table Section -->
             <div class="content-section" id="usersSection">
                 <div class="section-header">
