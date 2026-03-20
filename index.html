@@ -12,20 +12,25 @@
 
 <!-- LOGIN -->
 <div id="loginContainer" class="login-container">
-    <form id="adminLoginForm" class="login-box">
-        <h2>Admin Login</h2>
+    <div class="login-card">
+        <h1>Admin <span>Login</span></h1>
 
-        <input type="email" id="email" placeholder="Email" required>
-        <input type="password" id="password" placeholder="Password" required>
+        <form id="adminLoginForm" class="login-form">
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="password" placeholder="Password" required>
 
-        <button type="submit">Login</button>
-    </form>
+            <button type="submit">Login</button>
+        </form>
+    </div>
 </div>
 
 <!-- DASHBOARD -->
-<div id="dashboard" class="hidden">
-    <h2>Dashboard</h2>
-    <button id="logoutBtn">Logout</button>
+<div id="dashboard" class="hidden dashboard">
+    
+    <div class="header">
+        <h2>Dashboard</h2>
+        <button id="logoutBtn">Logout</button>
+    </div>
 
     <table>
         <thead>
@@ -37,6 +42,7 @@
         </thead>
         <tbody id="usersTableBody"></tbody>
     </table>
+
 </div>
 
 <script type="module" src="admin.js"></script>
