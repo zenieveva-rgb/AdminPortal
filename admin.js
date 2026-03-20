@@ -1,14 +1,17 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
 import { 
-    getDatabase, ref, onValue 
+    getDatabase, ref, onValue, set, remove 
 } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
 
 import { 
-    getAuth, signInWithEmailAndPassword,
-    onAuthStateChanged, signOut
+    getAuth, 
+    signInWithEmailAndPassword,
+    onAuthStateChanged,
+    signOut,
+    createUserWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
 
-// Firebase config
+// 🔥 Firebase config
 const firebaseConfig = {
     apiKey: "YOUR_KEY",
     authDomain: "YOUR_DOMAIN",
@@ -20,26 +23,22 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
 
-// DOM
+// 🔹 DOM
 const loginContainer = document.getElementById("loginContainer");
 const dashboard = document.getElementById("dashboard");
 const loginForm = document.getElementById("adminLoginForm");
 const logoutBtn = document.getElementById("logoutBtn");
 
-// LOGIN
+// 🔹 LOGIN
 loginForm.addEventListener("submit", (e) => {
     e.preventDefault();
 
-    signInWithEmailAndPassword(
-        auth,
-        email.value,
-        password.value
-    )
-    .then(() => alert("Login success"))
-    .catch(err => alert(err.message));
+    signInWithEmailAndPassword(auth, email.value, password.value)
+        .then(() => alert("Login success"))
+        .catch(err => alert(err.message));
 });
 
-// AUTH STATE
+// 🔹 AUTH STATE
 onAuthStateChanged(auth, (user) => {
     if (user) {
         loginContainer.style.display = "none";
@@ -51,7 +50,7 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// LOAD DATA
+// 🔹 LOAD REQUESTS
 function loadRequests() {
     const table = document.getElementById("usersTableBody");
     const refData = ref(db, "pendingApprovals");
@@ -61,17 +60,20 @@ function loadRequests() {
 
         table.innerHTML = "";
 
-        if (!data) return;
+        if (!data) {
+            table.innerHTML = "<tr><td>No requests</td></tr>";
+            return;
+        }
 
         Object.entries(data).forEach(([id, req]) => {
             table.innerHTML += `
                 <tr>
-                    <td>${req.firstName || ''}</td>
                     <td>${req.email}</td>
-                    <td>${req.status || 'pending'}</td>
-                    <td>${new Date(req.requestedAt || Date.now()).toLocaleString()}</td>
+                    <td>${req.status}</td>
                     <td>
-                        <button onclick="approveUser('${id}')">Approve</button>
+                        <button onclick="approveUser('${id}', '${req.email}')">
+                            Approve
+                        </button>
                     </td>
                 </tr>
             `;
@@ -79,25 +81,16 @@ function loadRequests() {
     });
 }
 
-// ✅ THIS WAS MISSING — REQUIRED
-window.approveUser = function(id) {
-    console.log("Approve:", id);
-};
-
-// LOGOUT
-logoutBtn.addEventListener("click", () => {
-    signOut(auth);
-});
-
+// 🔹 APPROVE USER (IMPORTANT)
 window.approveUser = async function(id, email) {
-    const password = "Temp12345";
-
     try {
+        const password = "Temp12345";
+
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const uid = userCredential.user.uid;
 
         await set(ref(db, "users/" + uid), {
-            email: email,
+            email,
             role: "secretary",
             status: "approved"
         });
@@ -109,3 +102,8 @@ window.approveUser = async function(id, email) {
         alert(error.message);
     }
 };
+
+// 🔹 LOGOUT
+logoutBtn.addEventListener("click", () => {
+    signOut(auth);
+});
