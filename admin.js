@@ -1,99 +1,75 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
 import { 
-    getDatabase, 
-    ref, 
-    onValue 
+    getDatabase, ref, onValue 
 } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
 
 import { 
-    getAuth, 
-    signInWithEmailAndPassword,
-    onAuthStateChanged,
-    signOut
+    getAuth, signInWithEmailAndPassword,
+    onAuthStateChanged, signOut
 } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
 
-// ============================================
-// FIREBASE CONFIG
-// ============================================
+// Firebase config
 const firebaseConfig = {
-    apiKey: "AIzaSyBdlEvDlQ1qWr8xdL4bV25NW4RgcTajYqM",
-    authDomain: "database-98a70.firebaseapp.com",
-    databaseURL: "https://database-98a70-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "database-98a70",
-    storageBucket: "database-98a70.appspot.com",
-    messagingSenderId: "460345885965",
-    appId: "1:460345885965:web:8484da766b979a0eaf9c44"
+    apiKey: "YOUR_KEY",
+    authDomain: "YOUR_DOMAIN",
+    databaseURL: "YOUR_DB_URL",
+    projectId: "YOUR_ID"
 };
 
-// INIT
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
 
-// ============================================
 // DOM
-// ============================================
 const loginContainer = document.getElementById("loginContainer");
 const dashboard = document.getElementById("dashboard");
 const loginForm = document.getElementById("adminLoginForm");
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
 const logoutBtn = document.getElementById("logoutBtn");
 
-// ============================================
 // LOGIN
-// ============================================
 loginForm.addEventListener("submit", (e) => {
     e.preventDefault();
 
-    const email = emailInput.value;
-    const password = passwordInput.value;
-
-    signInWithEmailAndPassword(auth, email, password)
-        .then(() => {
-            alert("Login successful");
-        })
-        .catch((error) => {
-            alert("Login failed: " + error.message);
-        });
+    signInWithEmailAndPassword(
+        auth,
+        email.value,
+        password.value
+    )
+    .then(() => alert("Login success"))
+    .catch(err => alert(err.message));
 });
 
-// ============================================
 // AUTH STATE
-// ============================================
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        showDashboard();
+        loginContainer.style.display = "none";
+        dashboard.style.display = "block";
         loadRequests();
     } else {
-        showLogin();
+        loginContainer.style.display = "block";
+        dashboard.style.display = "none";
     }
 });
 
-// ============================================
-// LOAD REQUESTS (THIS IS THE IMPORTANT PART)
-// ============================================
+// LOAD DATA
 function loadRequests() {
-    const requestsRef = ref(db, "pendingApprovals");
+    const table = document.getElementById("usersTableBody");
+    const refData = ref(db, "pendingApprovals");
 
-    onValue(requestsRef, (snapshot) => {
+    onValue(refData, (snapshot) => {
         const data = snapshot.val();
-        const table = document.getElementById("usersTableBody");
 
         table.innerHTML = "";
 
-        if (!data) {
-            table.innerHTML = "<tr><td colspan='5'>No requests found</td></tr>";
-            return;
-        }
+        if (!data) return;
 
         Object.entries(data).forEach(([id, req]) => {
             table.innerHTML += `
                 <tr>
-                    <td>${req.firstName || ''} ${req.lastName || ''}</td>
+                    <td>${req.firstName || ''}</td>
                     <td>${req.email}</td>
-                    <td>${req.status}</td>
-                    <td>${new Date(req.requestedAt).toLocaleString()}</td>
+                    <td>${req.status || 'pending'}</td>
+                    <td>${new Date(req.requestedAt || Date.now()).toLocaleString()}</td>
                     <td>
                         <button onclick="approveUser('${id}')">Approve</button>
                     </td>
@@ -103,22 +79,12 @@ function loadRequests() {
     });
 }
 
-// ============================================
+// ✅ THIS WAS MISSING — REQUIRED
+window.approveUser = function(id) {
+    console.log("Approve:", id);
+};
+
 // LOGOUT
-// ============================================
 logoutBtn.addEventListener("click", () => {
     signOut(auth);
 });
-
-// ============================================
-// UI
-// ============================================
-function showDashboard() {
-    loginContainer.style.display = "none";
-    dashboard.style.display = "flex";
-}
-
-function showLogin() {
-    loginContainer.style.display = "flex";
-    dashboard.style.display = "none";
-}
