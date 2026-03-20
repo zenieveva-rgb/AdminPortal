@@ -50,27 +50,18 @@ loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     try {
-        console.log("Logging in...");
-
-        const userCred = await signInWithEmailAndPassword(
-            auth,
-            email.value,
-            password.value
-        );
-
+        const userCred = await signInWithEmailAndPassword(auth, email.value, password.value);
         const uid = userCred.user.uid;
 
         // 🔐 Check if admin
         const snap = await get(ref(db, `users/${uid}`));
-
         if (!snap.exists() || snap.val().role !== "admin") {
             alert("Access denied: Not an admin");
-
             await signOut(auth);
-            return; // ✅ NOW VALID (inside function)
+            return;
         }
 
-        // ✅ SHOW DASHBOARD
+        // ✅ Show dashboard
         loginContainer.classList.add("hidden");
         dashboard.classList.remove("hidden");
 
@@ -88,11 +79,6 @@ onAuthStateChanged(auth, (user) => {
         dashboard.classList.add("hidden");
     }
 });
-const uid = userCred.user.uid;
-
-const adminRef = ref(db, `users/${uid}`);
-const snap = await get(adminRef);
-
 
 /* 🔹 LOAD REQUESTS */
 function loadRequests() {
