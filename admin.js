@@ -1,18 +1,4 @@
-// ============================================
-// SECRETARYWEB ADMIN PORTAL
-// Compatible with existing Firebase Rules
-// Database: database-98a70 (Asia Southeast)
-// ============================================
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
-import { 
-    getAuth, 
-    signInWithEmailAndPassword, 
-    signOut, 
-    onAuthStateChanged,
-    setPersistence,
-    browserLocalPersistence
-} from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
 import { 
     getDatabase, 
     ref, 
@@ -30,25 +16,29 @@ import {
 // YOUR FIREBASE CONFIG
 // ============================================
 const firebaseConfig = {
-    apiKey: "AIzaSy...", // Get from Firebase Console → Project Settings
+    apiKey: "AIzaSyBdlEvDlQ1qWr8xdL4bV25NW4RgcTajYqM",
     authDomain: "database-98a70.firebaseapp.com",
     databaseURL: "https://database-98a70-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "database-98a70",
-    storageBucket: "database-98a70.appspot.com",
-    messagingSenderId: "123456789", // Get from Console
-    appId: "1:123456789:web:abc123" // Get from Console
+    storageBucket: "database-98a70.firebasestorage.app",
+    messagingSenderId: "460345885965",
+    appId: "1:460345885965:web:8484da766b979a0eaf9c44"
 };
 
 // ============================================
-// SUPER ADMIN CONFIG
+// BUILT-IN ADMIN CREDENTIALS
 // ============================================
-const SUPER_ADMIN_EMAIL = 'depeddcp11@gmail.com';
+const ADMIN_CREDENTIALS = {
+    username: "developer",
+    password: "developer1245",
+    email: "developer@admin.com"
+};
 
-// Initialize
+// ============================================
+// INITIALIZE FIREBASE
+// ============================================
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const db = getDatabase(app);
-setPersistence(auth, browserLocalPersistence);
 
 // ============================================
 // DOM ELEMENTS
@@ -106,10 +96,10 @@ const elements = {
 };
 
 // ============================================
-// STATE
+// AUTHENTICATION STATE
 // ============================================
-let currentUser = null;
-let isSuperAdmin = false;
+let isAuthenticated = false;
+let sessionExpiry = null;
 let usersData = {};
 let attendanceData = {};
 let scansData = {};
@@ -117,83 +107,116 @@ let currentFilter = 'all';
 let currentTab = 'users';
 let confirmCallback = null;
 
-// ============================================
-// AUTHENTICATION
-// ============================================
+// Session timeout (8 hours)
+const SESSION_TIMEOUT = 8 * 60 * 60 * 1000;
 
-onAuthStateChanged(auth, async (user) => {
-    console.log('Auth state:', user ? user.email : 'null');
-    
-    if (user) {
-        // Check if super admin or regular admin
-        isSuperAdmin = user.email === SUPER_ADMIN_EMAIL;
-        
-        if (isSuperAdmin) {
-            // Super admin - auto access
-            currentUser = user;
-            setupAdminUI('Super Admin');
+// ============================================
+// SIMPLE LOGIN FUNCTION
+// ============================================
+function checkAuth() {
+    const session = localStorage.getItem('admin_session');
+    if (session) {
+        const { expiry, username } = JSON.parse(session);
+        if (Date.now() < expiry) {
+            isAuthenticated = true;
+            setupAdminUI(username);
             showDashboard();
             loadAllData();
+            startSessionTimer();
+            return true;
         } else {
-            // Check if regular admin in database
-            const adminRef = ref(db, `admins/${user.uid}`);
-            const snapshot = await get(adminRef);
-            
-            if (snapshot.exists()) {
-                currentUser = user;
-                setupAdminUI('Admin');
-                showDashboard();
-                loadAllData();
-            } else {
-                await signOut(auth);
-                showToast('Access denied. Not authorized.', 'error');
-                showLogin();
-            }
+            localStorage.removeItem('admin_session');
         }
-    } else {
-        currentUser = null;
-        isSuperAdmin = false;
+    }
+    return false;
+}
+
+// Check on page load
+document.addEventListener('DOMContentLoaded', () => {
+    if (!checkAuth()) {
         showLogin();
     }
 });
 
-function setupAdminUI(role) {
-    elements.adminName.textContent = currentUser.email.split('@')[0];
-    elements.adminRole.textContent = role;
-    
-    // Show/hide super admin features
-    if (!isSuperAdmin) {
-        // Regular admins can't manage other admins
-        document.querySelectorAll('.super-admin-only').forEach(el => el.style.display = 'none');
-    }
-}
-
-// Login
-elements.loginForm?.addEventListener('submit', async (e) => {
+// Login form submission
+elements.loginForm?.addEventListener('submit', (e) => {
     e.preventDefault();
     
     const email = elements.emailInput.value.trim();
     const password = elements.passwordInput.value;
     
     if (!email || !password) {
-        showToast('Please enter email and password', 'warning');
+        showToast('Please enter credentials', 'warning');
         return;
     }
     
-    setLoading(true);
-    
-    try {
-        await signInWithEmailAndPassword(auth, email, password);
-        showToast('Welcome back!', 'success');
-    } catch (error) {
-        console.error('Login error:', error);
-        showToast(getErrorMessage(error.code), 'error');
-    } finally {
-        setLoading(false);
+    // Simple hardcoded login
+    if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
+        // Set session
+        const session = {
+            username: ADMIN_CREDENTIALS.username,
+            email: ADMIN_CREDENTIALS.email,
+            expiry: Date.now() + SESSION_TIMEOUT
+        };
+        localStorage.setItem('admin_session', JSON.stringify(session));
+        
+        isAuthenticated = true;
+        setupAdminUI(ADMIN_CREDENTIALS.username);
+        showDashboard();
+        loadAllData();
+        startSessionTimer();
+        showToast('Welcome, Developer!', 'success');
+    } else {
+        showToast('Invalid credentials', 'error');
     }
 });
 
-// Toggle password
+// Logout function
+elements.logoutBtn?.addEventListener('click', () => {
+    isAuthenticated = false;
+    localStorage.removeItem('admin_session');
+    showLogin();
+    showToast('Logged out successfully', 'success');
+});
+
+// Session timer
+function startSessionTimer() {
+    // Check every minute
+    setInterval(() => {
+        const session = localStorage.getItem('admin_session');
+        if (session) {
+            const { expiry } = JSON.parse(session);
+            if (Date.now() >= expiry) {
+                isAuthenticated = false;
+                localStorage.removeItem('admin_session');
+                showLogin();
+                showToast('Session expired. Please login again.', 'warning');
+            }
+        }
+    }, 60000);
+}
+
+// Setup UI after login
+function setupAdminUI(username) {
+    elements.adminName.textContent = username;
+    elements.adminRole.textContent = 'Developer Admin';
+}
+
+// Show/hide views
+function showLogin() {
+    elements.loginContainer.style.display = 'flex';
+    elements.dashboard.style.display = 'none';
+    // Clear form
+    if (elements.emailInput) elements.emailInput.value = '';
+    if (elements.passwordInput) elements.passwordInput.value = '';
+}
+
+function showDashboard() {
+    elements.loginContainer.style.display = 'none';
+    elements.dashboard.style.display = 'flex';
+}
+
+// Toggle password visibility
 elements.togglePassword?.addEventListener('click', () => {
     const type = elements.passwordInput.type === 'password' ? 'text' : 'password';
     elements.passwordInput.type = type;
@@ -202,20 +225,9 @@ elements.togglePassword?.addEventListener('click', () => {
         : '<i class="fa-solid fa-eye-slash"></i>';
 });
 
-// Logout
-elements.logoutBtn?.addEventListener('click', async () => {
-    try {
-        await signOut(auth);
-        showToast('Logged out successfully', 'success');
-    } catch (error) {
-        showToast('Error logging out', 'error');
-    }
-});
-
 // ============================================
-// DATA LOADING
+// DATA LOADING (KEEP THIS PART AS IS)
 // ============================================
-
 function loadAllData() {
     loadUsers();
     loadAttendance();
@@ -250,7 +262,6 @@ function loadScans() {
         if (currentTab === 'scans') renderScans();
     });
 }
-
 // ============================================
 // RENDER FUNCTIONS
 // ============================================
