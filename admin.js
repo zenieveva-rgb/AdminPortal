@@ -1,6 +1,33 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
 import { getDatabase } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
 
+function loadRequests() {
+    const db = getDatabase();
+    const requestsRef = ref(db, "requests");
+
+    onValue(requestsRef, (snapshot) => {
+        const data = snapshot.val();
+        const table = document.getElementById("usersTableBody");
+
+        table.innerHTML = "";
+
+        if (data) {
+            Object.entries(data).forEach(([id, req]) => {
+                table.innerHTML += `
+                    <tr>
+                        <td>${req.name}</td>
+                        <td>${req.email}</td>
+                        <td>${req.status}</td>
+                        <td>${new Date(req.timestamp).toLocaleString()}</td>
+                        <td>
+                            <button onclick="approve('${id}')">Approve</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+    });
+}
 // ============================================
 // FIREBASE CONFIG
 // ============================================
