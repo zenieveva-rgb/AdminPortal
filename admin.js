@@ -74,18 +74,7 @@ loginForm.addEventListener("submit", async (e) => {
 
 /* 🔹 AUTH STATE */
 onAuthStateChanged(auth, (user) => {
-    if (user) {
-        console.log("Admin UID logged in:", user.uid);
-
-        // ✅ SHOW DASHBOARD
-        loginContainer.classList.add("hidden");
-        dashboard.classList.remove("hidden");
-
-        // ✅ LOAD DATA
-        loadRequests();
-
-    } else {
-        // ✅ SHOW LOGIN
+    if (!user) {
         loginContainer.classList.remove("hidden");
         dashboard.classList.add("hidden");
     }
