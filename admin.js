@@ -1,8 +1,13 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
 import {
-    getDatabase, ref, onValue, set, remove
+    getDatabase,
+    ref,
+    onValue,
+    set,
+    remove,
+    get, // ✅ MISSING
+    serverTimestamp // ✅ MISSING
 } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
-
 import {
     getAuth,
     signInWithEmailAndPassword,
@@ -97,34 +102,41 @@ function loadRequests() {
 /* 🔹 APPROVE USER */
 window.approveUser = async function(requestId, userEmail) {
     try {
-        // Create Firebase Auth user with temporary password
-        const tempPassword = 'Temp12345'; // admin sets temp password
+        console.log("Approving:", requestId, userEmail);
+
+        const tempPassword = "Temp12345";
+
+        // ✅ Create Auth user FIRST
         const userCredential = await createUserWithEmailAndPassword(auth, userEmail, tempPassword);
         const uid = userCredential.user.uid;
 
-        // Move request to users node with status approved
+        // ✅ Get request data
         const requestRef = ref(db, `pendingApprovals/${requestId}`);
         const snapshot = await get(requestRef);
-        if (!snapshot.exists()) throw new Error('Request not found');
 
-        const requestData = snapshot.val();
+        if (!snapshot.exists()) {
+            throw new Error("Request not found");
+        }
 
+        const data = snapshot.val();
+
+        // ✅ Save to users
         await set(ref(db, `users/${uid}`), {
-            ...requestData,
+            ...data,
             uid,
-            status: 'approved',
+            status: "approved",
             approvedAt: serverTimestamp(),
             approvedBy: auth.currentUser.email
         });
 
-        // Remove from pending
+        // ✅ Remove from pending
         await remove(requestRef);
 
-        showToast('User approved successfully!', 'success');
+        alert("User approved!");
 
-    } catch (error) {
-        console.error('Approval error:', error);
-        showToast('Approval failed: ' + error.message, 'error');
+    } catch (err) {
+        console.error("Approval error:", err);
+        alert(err.message);
     }
 };
 /* 🔹 LOGOUT */
