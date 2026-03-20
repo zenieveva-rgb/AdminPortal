@@ -164,12 +164,44 @@
         <i class="fa-solid fa-qrcode"></i> Scan Logs
     </button>
 </div>
-
-<!-- USERS SECTION (existing, add id) -->
+<!-- USERS SECTION -->
 <div id="usersSection" class="tab-section">
-    <!-- Your existing users table code here -->
-</div>
+    <div class="content-section">
+        <div class="section-header">
+            <div class="filter-tabs">
+                <button class="filter-tab active" data-filter="all">All Users</button>
+                <button class="filter-tab" data-filter="pending">Pending</button>
+                <button class="filter-tab" data-filter="approved">Approved</button>
+                <button class="filter-tab" data-filter="blocked">Blocked</button>
+            </div>
+            <div class="search-box">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" id="searchUsers" placeholder="Search users...">
+            </div>
+        </div>
 
+        <div class="table-container">
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Registered</th>
+                        <th>Last Login</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody"></tbody>
+            </table>
+
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <i class="fa-solid fa-inbox"></i>
+                <p>No users found</p>
+            </div>
+        </div>
+    </div>
+</div>
 <!-- ATTENDANCE SECTION -->
 <div id="attendanceSection" class="tab-section" style="display: none;">
     <div class="content-section">
@@ -219,47 +251,8 @@
         </div>
     </div>
 </div>
-            <!-- Users Table Section -->
-            <div class="content-section" id="usersSection">
-                <div class="section-header">
-                    <div class="filter-tabs">
-                        <button class="filter-tab active" data-filter="all">All Users</button>
-                        <button class="filter-tab" data-filter="pending">Pending</button>
-                        <button class="filter-tab" data-filter="approved">Approved</button>
-                        <button class="filter-tab" data-filter="blocked">Blocked</button>
-                    </div>
-                    <div class="search-box">
-                        <i class="fa-solid fa-search"></i>
-                        <input type="text" id="searchUsers" placeholder="Search users...">
-                    </div>
-                </div>
-
-                <div class="table-container">
-                    <table class="users-table">
-                        <thead>
-                            <tr>
-                                <th>User</th>
-                                <th>Email</th>
-                                <th>Status</th>
-                                <th>Registered</th>
-                                <th>Last Login</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usersTableBody">
-                            <!-- Users populated by JavaScript -->
-                        </tbody>
-                    </table>
-                    
-                    <div class="empty-state" id="emptyState" style="display: none;">
-                        <i class="fa-solid fa-inbox"></i>
-                        <p>No users found</p>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-
+      </main>
+</div>  
     <!-- User Details Modal -->
     <div class="modal" id="userModal" style="display: none;">
         <div class="modal-content">
