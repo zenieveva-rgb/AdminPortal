@@ -69,9 +69,20 @@ loginForm.addEventListener("submit", async (e) => {
 onAuthStateChanged(auth, (user) => {
     if (user) {
         console.log("Admin UID logged in:", user.uid);
+
+        // ✅ SHOW DASHBOARD
+        loginContainer.classList.add("hidden");
+        dashboard.classList.remove("hidden");
+
+        // ✅ LOAD DATA
+        loadRequests();
+
+    } else {
+        // ✅ SHOW LOGIN
+        loginContainer.classList.remove("hidden");
+        dashboard.classList.add("hidden");
     }
 });
-
 /* 🔹 LOAD REQUESTS */
 function loadRequests() {
     const table = document.getElementById("usersTableBody");
