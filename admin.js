@@ -26,15 +26,26 @@ const logoutBtn = document.getElementById("logoutBtn");
 const email = document.getElementById("email");
 const password = document.getElementById("password");
 
-/* 🔹 LOGIN */
-loginForm.addEventListener("submit", (e) => {
-    e.preventDefault();
+const loginForm = document.getElementById("adminLoginForm");
 
-    signInWithEmailAndPassword(auth, email.value, password.value)
-        .then(() => alert("Login success"))
-        .catch(err => alert(err.message));
+loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault(); // 🔥 stops page refresh
+
+    try {
+        console.log("Logging in...");
+
+        await signInWithEmailAndPassword(
+            auth,
+            email.value,
+            password.value
+        );
+
+        alert("Login successful");
+
+    } catch (err) {
+        alert(err.message);
+    }
 });
-
 /* 🔹 AUTH STATE */
 onAuthStateChanged(auth, (user) => {
     if (user) {
